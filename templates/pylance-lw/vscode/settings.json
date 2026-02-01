@@ -1,0 +1,22 @@
+{
+  // ============================================================================
+  // Pylance メモリ最適化設定
+  // ============================================================================
+  // Python開発でPylanceのメモリ使用量を削減するための設定
+  // base + python とマージして使用することを前提としています
+  // 
+  // 使用例: ./vscode-project-startup.sh base python pylance-lw
+  // ============================================================================
+
+  // --------------------------------------------------------------------------
+  // Pylance分析設定（メモリ最適化）
+  // --------------------------------------------------------------------------
+  "python.analysis.indexing": false,
+  "python.analysis.userFileIndexingLimit": 500,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.autoImportCompletions": false,
+  "python.analysis.persistAllIndices": false,
+  "python.analysis.cacheLSPData": false,
+  "python.analysis.nodeArguments": ["--max-old-space-size=1024"],
+  "python.analysis.typeCheckingMode": "basic"
+}

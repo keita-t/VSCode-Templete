@@ -78,17 +78,5 @@
   "python.testing.pytestArgs": [
     "-v",
     "--tb=short"
-  ],
-
-  // --------------------------------------------------------------------------
-  // Pylance分析設定（メモリ最適化）
-  // --------------------------------------------------------------------------
-  "python.analysis.indexing": false,
-  "python.analysis.userFileIndexingLimit": 500,
-  "python.analysis.diagnosticMode": "openFilesOnly",
-  "python.analysis.autoImportCompletions": false,
-  "python.analysis.persistAllIndices": false,
-  "python.analysis.cacheLSPData": false,
-  "python.analysis.nodeArguments": ["--max-old-space-size=1024"],
-  "python.analysis.typeCheckingMode": "basic"
+  ]
 }

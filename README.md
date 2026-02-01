@@ -232,7 +232,17 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 Python開発環境の設定
 
 - VSCode設定（Python固有）
-- ドキュメント・テストフォルダ構造
+- Pythonインタープリター、環境変数設定
+- pytest設定
+
+### pylance-lw
+
+Pylanceメモリ最適化設定
+
+- Python開発でPylanceのメモリ使用量を削減
+- インデックス無効化、診断モードの制限、キャッシュ無効化
+- 低スペックマシンや大規模Pythonプロジェクト向け
+- 使用例: `./vscode-project-startup.sh base python pylance-lw`
 
 ### docker
 
