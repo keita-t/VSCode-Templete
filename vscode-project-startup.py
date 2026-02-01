@@ -70,11 +70,13 @@ class Config:
         self._config = self._load_config()
 
     def _load_config(self) -> dict:
-        """設定ファイルを読み込む"""
+        """設定ファイルを読み込む（存在しない場合は作成）"""
         if not self.config_path.exists():
-            print_error(f"設定ファイルが見つかりません: {self.config_path}")
-            print_error("config.json を作成してください。")
-            sys.exit(1)
+            print(f"{Colors.YELLOW}設定ファイルが見つかりません: {self.config_path}{Colors.NC}")
+            print(f"{Colors.BLUE}デフォルトのconfig.jsonを作成します...{Colors.NC}")
+            self._create_default_config()
+            print_success(f"設定ファイルを作成しました: {self.config_path}")
+            print()
         
         try:
             with self.config_path.open('r', encoding='utf-8') as f:
@@ -84,6 +86,56 @@ class Config:
             sys.exit(1)
         except Exception as e:
             print_error(f"設定ファイル読み込みエラー: {e}")
+            sys.exit(1)
+    
+    def _create_default_config(self) -> None:
+        """デフォルトの設定ファイルを作成"""
+        default_config = {
+            "github": {
+                "user": "keita-t",
+                "repo": "VSCode-Templete",
+                "branch": "main"
+            },
+            "folder_mapping": {
+                "vscode": ".vscode",
+                "snippets": ".vscode",
+                "git": ".",
+                "config": ".",
+                "docker": "."
+            },
+            "file_mapping": {
+                ".gitignore": ".",
+                ".dockerignore": ".",
+                ".editorconfig": "."
+            },
+            "merge_patterns": [
+                "*.json",
+                "*.code-snippets",
+                "*.yaml",
+                "*.yml",
+                "*.toml",
+                "*.xml"
+            ],
+            "templates": {
+                "python": {
+                    "folder_mapping": {
+                        "docs": "docs",
+                        "tests": "tests"
+                    },
+                    "file_mapping": {
+                        "requirements.txt": ".",
+                        "setup.py": "."
+                    }
+                }
+            }
+        }
+        
+        try:
+            with self.config_path.open('w', encoding='utf-8') as f:
+                json.dump(default_config, f, indent=2, ensure_ascii=False)
+                f.write('\n')
+        except Exception as e:
+            print_error(f"設定ファイルの作成に失敗しました: {e}")
             sys.exit(1)
 
     @property
