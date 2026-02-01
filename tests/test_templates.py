@@ -1,6 +1,7 @@
 """テンプレート機能のテスト"""
 import json
 import subprocess
+import sys
 from pathlib import Path
 import pytest
 
@@ -9,7 +10,7 @@ def run_template_setup(setup_script: Path, test_dir: Path, template_dir: Path,
                        template_types: list[str]) -> tuple[int, str, str]:
     """テンプレートセットアップを実行"""
     cmd = [
-        "python3",
+        sys.executable,  # 現在のPythonインタープリタを使用
         str(setup_script),
         "-l", str(template_dir),
         "-d", "test"
@@ -135,7 +136,7 @@ def test_json_merge(setup_script: Path, test_dir: Path, template_dir: Path):
     assert merged_settings.get("newSetting") == "from-template"
 
 
-def test_yaml_merge(install_test_packages, setup_script: Path, test_dir: Path, template_dir: Path):
+def test_yaml_merge(setup_script: Path, test_dir: Path, template_dir: Path):
     """テスト7: YAMLマージ機能"""
     try:
         import yaml
@@ -170,7 +171,7 @@ services:
     assert "web" in content
 
 
-def test_toml_merge(install_test_packages, setup_script: Path, test_dir: Path, template_dir: Path):
+def test_toml_merge(setup_script: Path, test_dir: Path, template_dir: Path):
     """テスト8: TOMLマージ機能"""
     try:
         import tomli_w

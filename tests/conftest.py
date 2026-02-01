@@ -1,6 +1,5 @@
 """pytest設定とフィクスチャ"""
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Generator
@@ -23,19 +22,6 @@ def setup_script(project_root: Path) -> Path:
 def template_dir(project_root: Path) -> Path:
     """テンプレートディレクトリのパス"""
     return project_root / "templates"
-
-
-@pytest.fixture(scope="session")
-def install_test_packages():
-    """テストに必要なパッケージをインストール（一度だけ）"""
-    try:
-        subprocess.run(
-            ["pip", "install", "-q", "pyyaml", "tomli", "tomli-w"],
-            check=True,
-            capture_output=True
-        )
-    except subprocess.CalledProcessError:
-        pytest.skip("パッケージのインストールに失敗しました")
 
 
 @pytest.fixture
