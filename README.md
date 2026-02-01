@@ -15,7 +15,7 @@
 ./vscode-project-startup.sh default/base python/base python/pylance-lw
 
 # 複数のテンプレートを組み合わせ
-./vscode-project-startup.sh default/base python/base docker
+./vscode-project-startup.sh default/base python/base docker/base
 ```
 
 ## 📁 プロジェクト構造
@@ -42,11 +42,12 @@ VSCode-Templete/
 │   │   │   └── snippets/python.code-snippets
 │   │   └── pylance-lw/           # Pylance軽量版
 │   │       └── vscode/settings.json
-│   ├── docker/                   # Docker環境
-│   │   ├── config/
-│   │   │   ├── Dockerfile
-│   │   │   └── docker-compose.yml
-│   │   └── vscode/settings.json  # Docker用設定
+│   ├── docker/                   # Docker関連テンプレート
+│   │   └── base/                 # Docker基本設定
+│   │       ├── config/
+│   │       │   ├── Dockerfile
+│   │       │   └── docker-compose.yml
+│   │       └── vscode/settings.json
 │   └── test/                     # テスト用テンプレート
 │       ├── simple/               # シンプルなテストテンプレート
 │       │   ├── vscode/settings.json
@@ -170,7 +171,7 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 ### Docker開発環境
 
 ```bash
-./vscode-project-startup.sh default/base docker
+./vscode-project-startup.sh default/base docker/base
 ```
 
 ### 階層的な設定
@@ -294,12 +295,13 @@ Pylanceメモリ最適化設定
 - 低スペックマシンや大規模Pythonプロジェクト向け
 - 使用例: `./vscode-project-startup.sh default/base python/base python/pylance-lw`
 
-### docker
+### docker/base
 
-Docker開発環境の設定
+Docker基本設定
 
 - Dockerfile、docker-compose.yml のテンプレート
 - Docker用のVSCode設定
+- 使用例: `./vscode-project-startup.sh default/base docker/base`
 
 ### カスタムテンプレート
 
