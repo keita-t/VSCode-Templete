@@ -19,13 +19,6 @@
 
 ```
 VSCode-Templete/
-├── docs/                         # ドキュメント
-│   ├── development.md            # 開発者向けドキュメント（AI Copilot用）
-│   └── testing.md                # テスト関連ドキュメント
-├── .vscode/                      # プロジェクト設定
-│   ├── extensions.json           # 推奨拡張機能
-│   ├── settings.json             # VSCode設定
-│   └── tasks.json                # タスク定義（テスト実行など）
 ├── templates/                    # テンプレートフォルダ
 │   ├── default/                  # 汎用テンプレート
 │   │   ├── base/                 # 基本設定
@@ -39,26 +32,13 @@ VSCode-Templete/
 │   │   │   └── snippets/python.code-snippets
 │   │   └── pylance-lw/           # Pylance軽量版
 │   │       └── vscode/settings.json
-│   ├── docker/                   # Docker関連テンプレート
-│   │   └── base/                 # Docker基本設定
-│   │       ├── config/
-│   │       │   ├── Dockerfile
-│   │       │   └── docker-compose.yml
-│   │       └── vscode/settings.json
-│   └── test/                     # テスト用テンプレート
-│       ├── simple/               # シンプルなテストテンプレート
-│       │   ├── vscode/settings.json
-│       │   ├── git/.gitignore
-│       │   └── config/.editorconfig
-│       └── advanced/             # 高度なテストテンプレート
+│   └── docker/                   # Docker関連テンプレート
+│       └── base/                 # Docker基本設定
+│           ├── config/
+│           │   ├── Dockerfile
+│           │   └── docker-compose.yml
 │           └── vscode/settings.json
-├── test/                         # テストスイート
-│   └── manual/                   # 手動統合テスト
-│       ├── test-local-templates.sh   # ローカルテスト（オフライン）
-│       └── test-github-download.sh   # GitHubテスト（オンライン）
 ├── vscode-project-startup.sh     # メインスクリプト
-├── .github_token.example         # トークンファイル例
-├── .gitignore
 └── README.md                     # このファイル
 ```
 
@@ -138,8 +118,8 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 
 ## 💡 使用例
 
-**このツールは拡張可能な設計です。**  
-既存のテンプレート（`default/base`、`python/base`など）はあくまで例です。  
+**このツールは拡張可能な設計です。**
+既存のテンプレート（`default/base`、`python/base`など）はあくまで例です。
 独自のテンプレートを作成して、プロジェクトに合わせた設定を自由に配置できます。
 
 ### 基本的な使い方
@@ -296,35 +276,6 @@ Docker基本設定
 
 独自のテンプレートを `templates/` 配下に作成できます。
 階層化もサポートしています（例: `myproject/dev`, `myproject/prod`）
-
-## 🧪 テスト
-
-### ローカルテスト（オフライン）
-
-GitHub接続不要で高速にテスト：
-
-```bash
-# ローカルテンプレートを使用したテスト（5つのテストケース）
-./test/manual/test-local-templates.sh
-```
-
-### GitHubテスト（オンライン）
-
-GitHub APIとダウンロード機能をテスト：
-
-```bash
-# プライベートリポジトリの場合はトークン設定
-export GITHUB_TOKEN='your_token'
-
-# GitHubからダウンロードするテスト（5つのテストケース）
-./test/manual/test-github-download.sh
-```
-
-**テスト内容：**
-- ローカルテスト: ファイル配置、JSON マージ、ディレクトリ構造
-- GitHubテスト: API認証、ダウンロード、テンプレートディレクトリオプション
-
-詳細は [docs/testing.md](docs/testing.md) を参照してください。
 
 ## 📄 ライセンス
 
