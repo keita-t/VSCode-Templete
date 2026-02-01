@@ -100,8 +100,6 @@ pip install pyyaml tomli-w
         "setup.py": "."
       },
       "github_file_patterns": [
-        "pyproject.toml",
-        "requirements.txt",
         "setup.py",
         "setup.cfg",
         "MANIFEST.in",
@@ -128,15 +126,18 @@ pip install pyyaml tomli-w
 - ローカルモード（`-l`オプション使用時）では無視されます
 - プロジェクトで使用する可能性のあるファイルを追加してください
 - 例：`"Makefile"`, `"CMakeLists.txt"`, `"go.mod"` など
-- **テンプレート固有のパターン設定も可能**：`templates.<name>.github_file_patterns`で上書き可能
+- **テンプレート固有のパターン追加が可能**：`templates.<name>.github_file_patterns`でパターンを追加
+
+**パターンのマージ動作：**
+- グローバル設定とテンプレート固有の設定は**両方とも**使用されます
+- テンプレート固有のパターンがグローバル設定に追加されます（重複は自動除去）
+- 例：グローバルに`settings.json`、Pythonテンプレートに`pytest.ini`を追加した場合、両方探索されます
 
 **テンプレート固有の設定例：**
 ```json
 "templates": {
   "nodejs": {
     "github_file_patterns": [
-      "package.json",
-      "tsconfig.json",
       ".npmrc",
       ".nvmrc",
       "webpack.config.js"
@@ -144,6 +145,8 @@ pip install pyyaml tomli-w
   }
 }
 ```
+この場合、`nodejs`テンプレートでは：
+- グローバル設定のすべてのファイル + `.npmrc` + `.nvmrc` + `webpack.config.js`を探索
 
 ## 📝 カスタムテンプレートの作り方
 

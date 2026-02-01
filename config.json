@@ -50,8 +50,6 @@
         "setup.py": "."
       },
       "github_file_patterns": [
-        "pyproject.toml",
-        "requirements.txt",
         "setup.py",
         "setup.cfg",
         "MANIFEST.in",

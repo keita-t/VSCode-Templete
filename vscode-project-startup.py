@@ -206,10 +206,18 @@ class Config:
         return template_config.get("file_mapping", {})
 
     def get_template_github_file_patterns(self, template_name: str) -> List[str]:
-        """テンプレート固有のGitHubファイルパターンを取得（デフォルトはグローバル設定）"""
+        """テンプレート固有のGitHubファイルパターンを取得（グローバル設定 + テンプレート固有）"""
         templates = self._config.get("templates", {})
         template_config = templates.get(template_name, {})
-        return template_config.get("github_file_patterns", self.github_file_patterns)
+        template_patterns = template_config.get("github_file_patterns", [])
+        
+        # グローバル設定 + テンプレート固有のパターンをマージ（重複除去）
+        combined = list(self.github_file_patterns)  # コピーを作成
+        for pattern in template_patterns:
+            if pattern not in combined:
+                combined.append(pattern)
+        
+        return combined
 
 
 # ============================================================================
