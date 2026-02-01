@@ -73,7 +73,7 @@ run_test() {
 
     echo -e "${YELLOW}テスト: ${test_name}${NC}"
     mkdir -p "${test_dir}"
-    
+
     # カレントディレクトリはSCRIPT_DIRを維持し、-Cなしで実行
     # スクリプトの最後の引数としてテストディレクトリを指定
     if (cd "${test_dir}" && "${cmd[@]}"); then
@@ -100,7 +100,7 @@ TEST_DIR_1="${TEST_DIR}/test1-default"
 echo -e "${BLUE}--- テスト1: デフォルト動作（オプション無し）---${NC}"
 if run_test "default/base テンプレート" "${TEST_DIR_1}" "${SCRIPT_PATH}" default/base; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
-    
+
     # ファイルが存在するか確認
     if [ -f "${TEST_DIR_1}/.vscode/settings.json" ] && [ -f "${TEST_DIR_1}/.gitignore" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
@@ -274,14 +274,14 @@ echo ""
 if [ ${FAILED_TESTS} -eq 0 ]; then
     # 今回のテストディレクトリを削除
     rm -rf "${TEST_DIR}"
-    
+
     # 過去の残骸も削除
     OLD_DIRS=$(find /tmp -maxdepth 1 -type d -name "github-download-test-*" 2>/dev/null)
     if [ -n "${OLD_DIRS}" ]; then
         echo "${OLD_DIRS}" | xargs rm -rf
         echo -e "${GREEN}✓ /tmpフォルダをクリーンアップしました${NC}"
     fi
-    
+
     echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
     echo -e "${GREEN}✓ テストディレクトリを自動削除しました${NC}"
     exit 0

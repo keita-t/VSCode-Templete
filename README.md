@@ -41,9 +41,9 @@ templates/
 |---------------|---------------------|
 | `vscode/`     | `.vscode/`          |
 | `snippets/`   | `.vscode/`          |
-| `git/`        | `.`（ルート）        |
-| `config/`     | `.`（ルート）        |
-| `docker/`     | `.`（ルート）        |
+| `git/`        | `.git`              |
+| `config/`     | `.`（ルート）       |
+| `docker/`     | `.`（ルート）       |
 
 ### 使用方法
 
@@ -119,7 +119,7 @@ chmod 600 ~/.config/vscode-templates/token
 export GITHUB_TOKEN='github_pat_xxxxx'
 ```
 
-トークンの作成：GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)  
+トークンの作成：GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 必要な権限：`repo`
 
 ## �📄 ライセンス
