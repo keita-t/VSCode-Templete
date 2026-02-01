@@ -36,12 +36,14 @@ NC='\033[0m' # No Color
 
 # --- GitHubリポジトリ設定 ---
 # テンプレートを取得するGitHubリポジトリの情報
-GITHUB_USER="keita-t"  # ← 【必須】実際のGitHubユーザー名に変更してください
+# 公開リポジトリ以外で使用する場合は変更できます
+GITHUB_USER="keita-t"               # GitHubユーザー名
 REPO_NAME="VSCode-Templete"         # リポジトリ名
 BRANCH="main"                       # ブランチ名（mainまたはmaster）
 
-# --- 認証設定（プライベートリポジトリの場合に必要） ---
+# --- 認証設定（オプション：このリポジトリはパブリックなので通常不要） ---
 # GitHub Personal Access Token
+# プライベートフォーク使用時やAPI rate limit回避のために設定可能
 # 優先順位: 環境変数 > .github_token > ~/.config/vscode-templates/token
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
@@ -113,7 +115,7 @@ load_github_token() {
         if [[ "$perms" != "600" && "$perms" != "400" ]]; then
             echo -e "${YELLOW}Warning: $project_token has insecure permissions ($perms). Consider: chmod 600 $project_token${NC}" >&2
         fi
-        
+
         # コメント行（#で始まる）と空行を除外して、最初の有効な行を取得
         GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "$project_token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
         if [[ -n "$GITHUB_TOKEN" ]]; then
@@ -130,7 +132,7 @@ load_github_token() {
         if [[ "$perms" != "600" && "$perms" != "400" ]]; then
             echo -e "${YELLOW}Warning: $global_token has insecure permissions ($perms). Consider: chmod 600 $global_token${NC}" >&2
         fi
-        
+
         # コメント行（#で始まる）と空行を除外して、最初の有効な行を取得
         GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "$global_token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
         if [[ -n "$GITHUB_TOKEN" ]]; then
@@ -183,7 +185,7 @@ get_template_folder_mapping() {
     # テンプレート名からベース名を抽出（サブディレクトリ対応）
     # 例: "python/base" -> "python", "base" -> "base"
     local base_template="${template_type%%/*}"
-    
+
     # テンプレート名を大文字に変換して変数名を構築
     local mapping_var="${base_template^^}_FOLDER_MAPPING"
 
@@ -243,7 +245,7 @@ get_template_files() {
     local template_type="$1"
     local subfolder="$2"
     local template_path="${TEMPLATE_DIR}/${template_type}/${subfolder}"
-    
+
     # ローカルディレクトリが存在する場合はそちらを使用
     if [ -d "${template_path}" ]; then
         # ローカルファイルシステムからファイルリストを取得
@@ -258,7 +260,7 @@ get_template_files() {
     else
         # GitHub APIでファイルリストを取得
         local api_url="https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${TEMPLATE_DIR}/${template_type}/${subfolder}?ref=${BRANCH}"
-        
+
         local response
         if [ -n "$GITHUB_TOKEN" ]; then
             response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "${api_url}")
@@ -413,7 +415,7 @@ for file in "${FILES[@]}"; do
 
     dest_file="${TEMP_DIR}/${file}"
     mkdir -p "$(dirname "${dest_file}")"
-    
+
     # ローカルファイルが存在する場合はコピー
     local_file="${TEMPLATE_DIR}/${file}"
     if [ -f "${local_file}" ]; then
@@ -468,11 +470,11 @@ merge_json_files() {
     # 行コメント（//）とブロックコメント（/* */）を削除
     local base_clean=$(mktemp)
     local new_clean=$(mktemp)
-    
+
     # コメントを削除（簡易的な処理）
     sed 's|//.*||g' "${base_file}" | grep -v '^\s*$' > "${base_clean}"
     sed 's|//.*||g' "${new_file}" | grep -v '^\s*$' > "${new_clean}"
-    
+
     # JSONファイルをマージ（深い階層まで統合）
     if jq -s '.[0] * .[1]' "${base_clean}" "${new_clean}" > "${output_file}" 2>/dev/null; then
         rm -f "${base_clean}" "${new_clean}"

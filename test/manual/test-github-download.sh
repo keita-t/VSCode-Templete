@@ -15,7 +15,8 @@
 # ./test/manual/test-github-download.sh
 #
 # 【前提条件】
-# - GitHub tokenが設定されている（環境変数、.github_token、または~/.config/vscode-templates/token）
+# - このリポジトリはパブリックなので、tokenなしで実行可能
+#   （プライベートフォークの場合は、環境変数、.github_token、または~/.config/vscode-templates/tokenにtoken設定）
 # - test-templeteディレクトリがGitHubにpushされている
 # - インターネット接続が利用可能
 # ============================================================================
@@ -57,9 +58,9 @@ if [ -z "${GITHUB_TOKEN:-}" ]; then
 fi
 
 if [ -n "$TOKEN_WARNING" ]; then
-    echo -e "${YELLOW}警告: GitHub tokenが設定されていません${NC}"
-    echo -e "${YELLOW}プライベートリポジトリの場合、テストが失敗する可能性があります${NC}"
-    echo -e "${YELLOW}設定方法: README.md の「プライベートリポジトリを使用する場合」を参照${NC}"
+    echo -e "${YELLOW}情報: GitHub tokenが設定されていません${NC}"
+    echo -e "${YELLOW}このリポジトリはパブリックなので、tokenなしでもテストできます${NC}"
+    echo -e "${YELLOW}プライベートフォークの場合は README.md の「GitHub Personal Access Token」を参照${NC}"
     echo ""
 fi
 

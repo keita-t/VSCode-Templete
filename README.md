@@ -85,9 +85,13 @@ cd /path/to/your/project
 /path/to/vscode-project-startup.sh base python
 ```
 
-### 3. プライベートリポジトリを使用する場合
+### 3. GitHub Personal Access Token（オプション）
 
-プライベートリポジトリからテンプレートをダウンロードする場合は、GitHub Personal Access Tokenが必要です。
+**📢 このリポジトリは現在パブリックです。トークンなしでも使用できます。**
+
+ただし、以下の場合はGitHub Personal Access Tokenの設定を推奨します：
+- プライベートリポジトリをフォークして使用する場合
+- API rate limitを回避したい場合
 
 **トークンの設定方法（3つの選択肢）:**
 
@@ -139,7 +143,8 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 必要な権限: `repo` (Full control of private repositories)
 
 **⚠️ セキュリティ注意:**
-- `.github_token`ファイルは`.gitignore`に含まれています（コミットされません）
+- このリポジトリはパブリックなので、通常はトークン不要です
+- トークンを使用する場合、`.github_token`ファイルは`.gitignore`に含まれています（コミットされません）
 - ファイルのパーミッションは必ず`600`または`400`に設定してください
 - 環境変数を使用する場合は、使用後に`unset GITHUB_TOKEN`でトークンを削除してください
 
