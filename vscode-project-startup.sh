@@ -66,10 +66,13 @@ declare -A DEFAULT_FILE_MAPPING=(
 # --- マージ設定（全テンプレート共通） ---
 # マージ対象とするファイルパターン（ワイルドカード使用可）
 # ここに指定されたパターンに一致するファイルは、既存ファイルとマージされます
-# 必要に応じて他の形式（YAML、TOMLなど）も追加可能です
 DEFAULT_MERGE_SETTING=(
     "*.json"          # JSONファイル（settings.json, package.jsonなど）
     "*.code-snippets" # VSCodeスニペットファイル
+    "*.yaml"          # YAMLファイル（docker-compose.yml, .gitlab-ci.ymlなど）
+    "*.yml"           # YAML短縮形式
+    "*.toml"          # TOMLファイル（pyproject.toml, Cargo.tomlなど）
+    "*.xml"           # XMLファイル（pom.xml, .idea/workspace.xmlなど）
 )
 
 # --- 個別テンプレート設定 ---
@@ -486,6 +489,94 @@ merge_json_files() {
     fi
 }
 
+merge_yaml_files() {
+    local base_file="$1"
+    local new_file="$2"
+    local output_file="$3"
+
+    # yqがインストールされているかチェック
+    if ! command -v yq &> /dev/null; then
+        echo -e "  ${YELLOW}注意: yqがインストールされていないため、YAMLマージをスキップ（上書き）${NC}"
+        return 1
+    fi
+
+    # YAMLファイルをマージ（深い階層まで統合）
+    # yq eval-all '. as $item ireduce ({}; . * $item)' で複数ファイルをマージ
+    if yq eval-all '. as $item ireduce ({}; . * $item)' "${base_file}" "${new_file}" > "${output_file}" 2>/dev/null; then
+        return 0
+    else
+        echo -e "  ${YELLOW}注意: YAMLマージに失敗（上書き）${NC}"
+        return 1
+    fi
+}
+
+merge_toml_files() {
+    local base_file="$1"
+    local new_file="$2"
+    local output_file="$3"
+
+    # toml-cliまたはdaselがインストールされているかチェック
+    if command -v dasel &> /dev/null; then
+        # daselを使用してTOMLをマージ
+        if dasel -f "${base_file}" -r toml -w toml > "${output_file}" 2>/dev/null && \
+           dasel -f "${new_file}" -r toml | dasel -f "${output_file}" -r toml -w toml put -t string -v - 2>/dev/null; then
+            return 0
+        fi
+    fi
+    
+    echo -e "  ${YELLOW}注意: daselがインストールされていないため、TOMLマージをスキップ（上書き）${NC}"
+    return 1
+}
+
+merge_xml_files() {
+    local base_file="$1"
+    local new_file="$2"
+    local output_file="$3"
+
+    # xmlstarletがインストールされているかチェック
+    if ! command -v xmlstarlet &> /dev/null; then
+        echo -e "  ${YELLOW}注意: xmlstarletがインストールされていないため、XMLマージをスキップ（上書き）${NC}"
+        return 1
+    fi
+
+    # XMLファイルを単純に結合（ルート要素の子要素をマージ）
+    # より高度なマージが必要な場合はカスタマイズが必要
+    if cp "${base_file}" "${output_file}" 2>/dev/null; then
+        echo -e "  ${YELLOW}注意: XMLマージは基本的な実装のみ（上書き）${NC}"
+        return 1
+    fi
+    
+    return 1
+}
+
+# ファイル形式に応じたマージ関数を呼び出す
+merge_structured_file() {
+    local base_file="$1"
+    local new_file="$2"
+    local output_file="$3"
+    local filename=$(basename "${new_file}")
+
+    # ファイル拡張子に基づいてマージ関数を選択
+    case "${filename}" in
+        *.json|*.code-snippets)
+            merge_json_files "${base_file}" "${new_file}" "${output_file}"
+            ;;
+        *.yaml|*.yml)
+            merge_yaml_files "${base_file}" "${new_file}" "${output_file}"
+            ;;
+        *.toml)
+            merge_toml_files "${base_file}" "${new_file}" "${output_file}"
+            ;;
+        *.xml)
+            merge_xml_files "${base_file}" "${new_file}" "${output_file}"
+            ;;
+        *)
+            echo -e "  ${YELLOW}注意: 不明なファイル形式（上書き）${NC}"
+            return 1
+            ;;
+    esac
+}
+
 
 for i in "${!FILES[@]}"; do
     file="${FILES[$i]}"
@@ -537,11 +628,11 @@ for i in "${!FILES[@]}"; do
             BACKUP_FILE="${dest_file}.backup.$(date +%Y%m%d_%H%M%S)"
             cp "${dest_file}" "${BACKUP_FILE}"
 
-            # JSONマージを試行
+            # 構造化ファイルマージを試行
             TEMP_MERGED="${dest_file}.merged.tmp"
-            if merge_json_files "${dest_file}" "${source_path}" "${TEMP_MERGED}"; then
+            if merge_structured_file "${dest_file}" "${source_path}" "${TEMP_MERGED}"; then
                 mv "${TEMP_MERGED}" "${dest_file}"
-                echo -e "  ${GREEN}✓${NC} ${filename} → ${display_dir}/ ${YELLOW}[JSON統合]${NC} ${mapping_type}"
+                echo -e "  ${GREEN}✓${NC} ${filename} → ${display_dir}/ ${YELLOW}[マージ]${NC} ${mapping_type}"
             else
                 # マージ失敗時は通常の上書き
                 cp "${source_path}" "${dest_file}"

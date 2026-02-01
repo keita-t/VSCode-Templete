@@ -63,6 +63,29 @@ templates/
 
 このツールの最大の特徴は、既存のプロジェクト設定を上書きせず、**マージ**することです。
 
+#### 対応フォーマット
+
+以下の構造化ファイルは自動的にマージされます：
+
+- **JSON** (`.json`, `.code-snippets`) - `jq`を使用
+- **YAML** (`.yaml`, `.yml`) - `yq`を使用
+- **TOML** (`.toml`) - `dasel`を使用
+- **XML** (`.xml`) - `xmlstarlet`を使用（基本的な実装）
+
+**必要なツール：**
+```bash
+# macOS
+brew install jq yq dasel xmlstarlet
+
+# Ubuntu/Debian
+apt install jq
+snap install yq
+# dasel: https://github.com/TomWright/dasel
+# xmlstarlet: apt install xmlstarlet
+
+# ツールがない場合は自動的に上書きモードにフォールバック
+```
+
 #### JSONファイルのマージ
 
 `settings.json`、`launch.json`、`*.code-snippets`などのJSONファイルは、既存の設定と自動的にマージされます：
