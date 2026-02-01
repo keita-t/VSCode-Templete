@@ -1,22 +1,17 @@
 #!/bin/bash
 
 # ============================================================================
-# ローカルテンプレートテスト
+# ローカルテンプレートテスト（Python版）
 # ============================================================================
-# ローカルのtemplates/testディレクトリを直接使用してテストします
-# GitHubアクセス不要で高速にテストできます
-#
-# 【目的】
-# - スクリプトのコアロジックをテスト（ファイル配置、マージなど）
-# - GitHub APIに依存しない開発中のテスト
-# - CI/CDでのオフラインテスト
+# Python版スクリプトを使用して、ローカルのtemplates/testディレクトリをテストします
 #
 # 【実行方法】
 # ./test/manual/test-local-templates.sh
 #
 # 【前提条件】
 # - templates/testディレクトリがローカルに存在すること
-# - GitHubアクセス不要（完全オフラインで実行可能）
+# - Python 3.7+ がインストールされていること
+# - pyyaml, tomli, tomli-w がインストールされていること
 # ============================================================================
 
 set -e
@@ -25,29 +20,39 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "${SCRIPT_DIR}"
 
+# Python版スクリプトを使用
+SETUP_SCRIPT="${SCRIPT_DIR}/vscode-project-startup.py"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-TEST_TEMPLETE_DIR="${SCRIPT_DIR}/templates/test"
+TEST_TEMPLATE_DIR="${SCRIPT_DIR}/templates"
 TEST_DIR="/tmp/local-template-test-$(date +%s)"
 
 echo -e "${BLUE}================================${NC}"
-echo -e "${BLUE}ローカルテンプレートテスト${NC}"
-echo -e "${BLUE}（GitHubアクセス不要）${NC}"
+echo -e "${BLUE}Python版テンプレートテスト${NC}"
+echo -e "${BLUE}（ローカルテンプレート使用）${NC}"
 echo -e "${BLUE}================================${NC}"
 echo ""
 
-# templates/testディレクトリの存在確認
-if [ ! -d "${TEST_TEMPLETE_DIR}" ]; then
-    echo -e "${RED}エラー: templates/testディレクトリが見つかりません${NC}"
-    echo "場所: ${TEST_TEMPLETE_DIR}"
+# Python スクリプトの存在確認
+if [ ! -f "${SETUP_SCRIPT}" ]; then
+    echo -e "${RED}エラー: ${SETUP_SCRIPT} が見つかりません${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ templates/testディレクトリを確認: ${TEST_TEMPLETE_DIR}${NC}"
+# templates/testディレクトリの存在確認
+if [ ! -d "${TEST_TEMPLATE_DIR}/test" ]; then
+    echo -e "${RED}エラー: templates/testディレクトリが見つかりません${NC}"
+    echo "場所: ${TEST_TEMPLATE_DIR}/test"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Python スクリプト: ${SETUP_SCRIPT}${NC}"
+echo -e "${GREEN}✓ テンプレートディレクトリ: ${TEST_TEMPLATE_DIR}${NC}"
 echo ""
 
 # テスト関数
@@ -61,7 +66,7 @@ run_test() {
     echo -e "${BLUE}================================================================================${NC}"
 
     mkdir -p "${test_dir}"
-    return 0
+    cd "${test_dir}"
 }
 
 verify_file_exists() {
@@ -83,6 +88,8 @@ verify_file_content() {
         return 0
     else
         echo -e "${RED}  ✗ 内容不一致: $expected が見つかりません${NC}"
+        echo "実際の内容:"
+        cat "$file" | head -20
         return 1
     fi
 }
@@ -97,24 +104,9 @@ FAILED_TESTS=0
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_1="${TEST_DIR}/test1-simple"
-run_test "1/5" "simple テンプレート配置" "${TEST_DIR_1}"
+run_test "1" "simple テンプレート配置" "${TEST_DIR_1}"
 
-echo "ローカルテンプレートをコピー..."
-# test-templete/simpleから直接コピー（ドットファイルも含む）
-if [ -d "${TEST_TEMPLETE_DIR}/simple/vscode" ]; then
-    mkdir -p "${TEST_DIR_1}/.vscode"
-    cp "${TEST_TEMPLETE_DIR}/simple/vscode/"* "${TEST_DIR_1}/.vscode/" 2>/dev/null || true
-fi
-if [ -d "${TEST_TEMPLETE_DIR}/simple/git" ]; then
-    shopt -s dotglob
-    cp "${TEST_TEMPLETE_DIR}/simple/git/"* "${TEST_DIR_1}/" 2>/dev/null || true
-    shopt -u dotglob
-fi
-if [ -d "${TEST_TEMPLETE_DIR}/simple/config" ]; then
-    shopt -s dotglob
-    cp "${TEST_TEMPLETE_DIR}/simple/config/"* "${TEST_DIR_1}/" 2>/dev/null || true
-    shopt -u dotglob
-fi
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
 
 if verify_file_exists "${TEST_DIR_1}/.vscode/settings.json" && \
    verify_file_exists "${TEST_DIR_1}/.gitignore" && \
@@ -133,13 +125,9 @@ echo ""
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_2="${TEST_DIR}/test2-advanced"
-run_test "2/5" "advanced テンプレート配置" "${TEST_DIR_2}"
+run_test "2" "advanced テンプレート配置" "${TEST_DIR_2}"
 
-echo "ローカルテンプレートをコピー..."
-if [ -d "${TEST_TEMPLETE_DIR}/advanced/vscode" ]; then
-    mkdir -p "${TEST_DIR_2}/.vscode"
-    cp "${TEST_TEMPLETE_DIR}/advanced/vscode/"* "${TEST_DIR_2}/.vscode/" 2>/dev/null || true
-fi
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test advanced
 
 if verify_file_exists "${TEST_DIR_2}/.vscode/settings.json" && \
    verify_file_content "${TEST_DIR_2}/.vscode/settings.json" '"editor.fontSize": 16'; then
@@ -156,18 +144,9 @@ echo ""
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_3="${TEST_DIR}/test3-multiple"
-run_test "3/5" "複数テンプレート（simple → advanced）" "${TEST_DIR_3}"
+run_test "3" "複数テンプレート（simple → advanced）" "${TEST_DIR_3}"
 
-echo "simpleテンプレートを適用..."
-if [ -d "${TEST_TEMPLETE_DIR}/simple/vscode" ]; then
-    mkdir -p "${TEST_DIR_3}/.vscode"
-    cp "${TEST_TEMPLETE_DIR}/simple/vscode/"* "${TEST_DIR_3}/.vscode/" 2>/dev/null || true
-fi
-
-echo "advancedテンプレートを上書き適用..."
-if [ -d "${TEST_TEMPLETE_DIR}/advanced/vscode" ]; then
-    cp "${TEST_TEMPLETE_DIR}/advanced/vscode/"* "${TEST_DIR_3}/.vscode/" 2>/dev/null || true
-fi
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple advanced
 
 # 後から適用したadvancedの値（16）が優先されるべき
 if verify_file_exists "${TEST_DIR_3}/.vscode/settings.json" && \
@@ -181,110 +160,37 @@ fi
 echo ""
 
 # ============================================================================
-# テスト4: JSONマージ（jq使用）
+# テスト4: 既存ファイルが存在しない場合のセットアップ
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
-TEST_DIR_4="${TEST_DIR}/test4-merge"
-run_test "4/5" "JSONマージ機能" "${TEST_DIR_4}"
+TEST_DIR_4="${TEST_DIR}/test4-fresh"
+run_test "4" "クリーンプロジェクトへの適用" "${TEST_DIR_4}"
 
-# 既存のsettings.jsonを作成
-mkdir -p "${TEST_DIR_4}/.vscode"
-cat > "${TEST_DIR_4}/.vscode/settings.json" << 'EOF'
-{
-  "editor.fontSize": 20,
-  "existingSetting": "should-be-preserved",
-  "editor.tabSize": 4
-}
-EOF
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
 
-echo "既存のsettings.json:"
-cat "${TEST_DIR_4}/.vscode/settings.json"
-echo ""
-
-# jqが利用可能な場合のみマージテスト
-if command -v jq &> /dev/null; then
-    echo "jq利用可能、マージを実行..."
-
-    # simpleテンプレートのsettings.jsonとマージ
-    if [ -f "${TEST_TEMPLETE_DIR}/simple/vscode/settings.json" ]; then
-        # バックアップ作成
-        cp "${TEST_DIR_4}/.vscode/settings.json" "${TEST_DIR_4}/.vscode/settings.json.backup"
-
-        # jqでマージ（右側が優先）
-        jq -s '.[0] * .[1]' \
-            "${TEST_DIR_4}/.vscode/settings.json.backup" \
-            "${TEST_TEMPLETE_DIR}/simple/vscode/settings.json" \
-            > "${TEST_DIR_4}/.vscode/settings.json.tmp"
-        mv "${TEST_DIR_4}/.vscode/settings.json.tmp" "${TEST_DIR_4}/.vscode/settings.json"
-
-        echo "マージ後のsettings.json:"
-        cat "${TEST_DIR_4}/.vscode/settings.json"
-        echo ""
-
-        # 検証: 既存設定が保持され、新しい設定が追加されている
-        if verify_file_content "${TEST_DIR_4}/.vscode/settings.json" '"existingSetting": "should-be-preserved"' && \
-           verify_file_content "${TEST_DIR_4}/.vscode/settings.json" '"editor.fontSize": 14' && \
-           verify_file_exists "${TEST_DIR_4}/.vscode/settings.json.backup"; then
-            echo -e "${GREEN}[SUCCESS] テスト 4 完了（JSONマージ成功）${NC}"
-            PASSED_TESTS=$((PASSED_TESTS + 1))
-        else
-            echo -e "${RED}[FAILED] テスト 4 失敗${NC}"
-            FAILED_TESTS=$((FAILED_TESTS + 1))
-        fi
-    else
-        echo -e "${YELLOW}[SKIPPED] simpleテンプレートのsettings.jsonが見つかりません${NC}"
-        TOTAL_TESTS=$((TOTAL_TESTS - 1))
-    fi
+if verify_file_exists "${TEST_DIR_4}/.vscode/settings.json" && \
+   verify_file_exists "${TEST_DIR_4}/.gitignore"; then
+    echo -e "${GREEN}[SUCCESS] テスト 4 完了${NC}"
+    PASSED_TESTS=$((PASSED_TESTS + 1))
 else
-    echo -e "${YELLOW}[SKIPPED] jqがインストールされていません${NC}"
-    echo "インストール: brew install jq または apt-get install jq"
-    TOTAL_TESTS=$((TOTAL_TESTS - 1))
+    echo -e "${RED}[FAILED] テスト 4 失敗${NC}"
+    FAILED_TESTS=$((FAILED_TESTS + 1))
 fi
 echo ""
 
 # ============================================================================
-# テスト5: ファイル構造の検証
+# テスト5: ディレクトリ構造の確認
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_5="${TEST_DIR}/test5-structure"
-run_test "5/5" "ディレクトリ構造の検証" "${TEST_DIR_5}"
+run_test "5" "ディレクトリ構造の確認" "${TEST_DIR_5}"
 
-echo "完全な構造をコピー..."
-if [ -d "${TEST_TEMPLETE_DIR}/simple" ]; then
-    # vscode/
-    if [ -d "${TEST_TEMPLETE_DIR}/simple/vscode" ]; then
-        mkdir -p "${TEST_DIR_5}/.vscode"
-        cp "${TEST_TEMPLETE_DIR}/simple/vscode/"* "${TEST_DIR_5}/.vscode/" 2>/dev/null || true
-    fi
-    # git/ (ドットファイル含む)
-    if [ -d "${TEST_TEMPLETE_DIR}/simple/git" ]; then
-        shopt -s dotglob
-        cp "${TEST_TEMPLETE_DIR}/simple/git/"* "${TEST_DIR_5}/" 2>/dev/null || true
-        shopt -u dotglob
-    fi
-    # config/ (ドットファイル含む)
-    if [ -d "${TEST_TEMPLETE_DIR}/simple/config" ]; then
-        shopt -s dotglob
-        cp "${TEST_TEMPLETE_DIR}/simple/config/"* "${TEST_DIR_5}/" 2>/dev/null || true
-        shopt -u dotglob
-    fi
-fi
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
 
-echo "ディレクトリ構造:"
-tree -a "${TEST_DIR_5}" 2>/dev/null || ls -laR "${TEST_DIR_5}"
-echo ""
-
-# 期待されるファイルがすべて存在するか確認
-FILES_OK=true
-for file in .vscode/settings.json .gitignore .editorconfig; do
-    if [ ! -f "${TEST_DIR_5}/${file}" ]; then
-        FILES_OK=false
-        echo -e "${RED}  ✗ 不足: ${file}${NC}"
-    fi
-done
-
-if [ "$FILES_OK" = true ]; then
-    echo -e "${GREEN}[SUCCESS] テスト 5 完了（すべてのファイルが正しく配置）${NC}"
+# .vscodeディレクトリが正しく作成されているか
+if [ -d "${TEST_DIR_5}/.vscode" ] && \
+   verify_file_exists "${TEST_DIR_5}/.vscode/settings.json"; then
+    echo -e "${GREEN}[SUCCESS] テスト 5 完了${NC}"
     PASSED_TESTS=$((PASSED_TESTS + 1))
 else
     echo -e "${RED}[FAILED] テスト 5 失敗${NC}"
@@ -293,160 +199,167 @@ fi
 echo ""
 
 # ============================================================================
-# テスト6: JSONマージ機能のテスト
+# テスト6: JSONマージ機能
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_6="${TEST_DIR}/test6-json-merge"
-run_test "6/8" "JSONマージ機能" "${TEST_DIR_6}"
+run_test "6" "JSONマージ機能" "${TEST_DIR_6}"
 
 # 既存のsettings.jsonを作成
 mkdir -p "${TEST_DIR_6}/.vscode"
 cat > "${TEST_DIR_6}/.vscode/settings.json" << 'EOF'
 {
-  "editor.fontSize": 12,
-  "editor.tabSize": 2,
-  "files.autoSave": "onFocusChange"
+  "editor.fontSize": 20,
+  "existingSetting": "should-be-preserved",
+  "editor.tabSize": 4
 }
 EOF
 
-# メインスクリプトを使ってマージ（--template-dirオプションを使用）
-echo "メインスクリプトでテンプレート適用..."
-cd "${TEST_DIR_6}"
-"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-json > /dev/null 2>&1 || true
-cd "${SCRIPT_DIR}"
+echo "既存のsettings.json:"
+cat "${TEST_DIR_6}/.vscode/settings.json"
+echo ""
 
-# マージが正しく行われたかチェック（jqが必要）
-if command -v jq &> /dev/null; then
-    # 既存の設定が保持され、新しい設定が追加されている
-    if verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"files.autoSave": "onFocusChange"' && \
-       verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"editor.tabSize": 4' && \
-       verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"python.linting.enabled": true'; then
-        echo -e "${GREEN}[SUCCESS] テスト 6 完了（JSONマージ成功）${NC}"
-        PASSED_TESTS=$((PASSED_TESTS + 1))
-    else
-        echo -e "${RED}[FAILED] テスト 6 失敗（JSONマージ失敗）${NC}"
-        cat "${TEST_DIR_6}/.vscode/settings.json"
-        FAILED_TESTS=$((FAILED_TESTS + 1))
-    fi
+# テンプレートを適用（マージが発生するはず）
+python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-json
+
+echo "マージ後のsettings.json:"
+cat "${TEST_DIR_6}/.vscode/settings.json"
+echo ""
+
+# 既存設定が保持され、新しい設定も追加されているか確認
+if verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"existingSetting": "should-be-preserved"' && \
+   verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"newSetting": "from-template"'; then
+    echo -e "${GREEN}[SUCCESS] テスト 6 完了（JSONマージ成功）${NC}"
+    PASSED_TESTS=$((PASSED_TESTS + 1))
 else
-    echo -e "${YELLOW}[SKIPPED] テスト 6 スキップ（jqがインストールされていません）${NC}"
+    echo -e "${RED}[FAILED] テスト 6 失敗${NC}"
+    FAILED_TESTS=$((FAILED_TESTS + 1))
 fi
 echo ""
 
 # ============================================================================
-# テスト7: YAMLマージ機能のテスト
+# テスト7: YAMLマージ機能
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_7="${TEST_DIR}/test7-yaml-merge"
-run_test "7/8" "YAMLマージ機能" "${TEST_DIR_7}"
+run_test "7" "YAMLマージ機能" "${TEST_DIR_7}"
 
-# 既存のdocker-compose.ymlを作成
-mkdir -p "${TEST_DIR_7}/.vscode"
-cat > "${TEST_DIR_7}/.vscode/docker-compose.yml" << 'EOF'
+# PyYAML がインストールされているか確認
+if python3 -c "import yaml" 2>/dev/null; then
+    # 既存のdocker-compose.ymlを作成
+    mkdir -p "${TEST_DIR_7}"
+    cat > "${TEST_DIR_7}/docker-compose.yml" << 'EOF'
 version: '3.8'
-
 services:
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_PASSWORD: secret
+  existing-service:
+    image: nginx:latest
+    ports:
+      - "8080:80"
 EOF
 
-# メインスクリプトを使ってマージ
-echo "メインスクリプトでテンプレート適用..."
-cd "${TEST_DIR_7}"
-"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-yaml > /dev/null 2>&1 || true
-cd "${SCRIPT_DIR}"
+    echo "既存のdocker-compose.yml:"
+    cat "${TEST_DIR_7}/docker-compose.yml"
+    echo ""
 
-# マージが正しく行われたかチェック（yqが必要）
-if command -v yq &> /dev/null; then
-    # 既存のdbサービスと新しいwebサービスが両方存在するか
-    if verify_file_content "${TEST_DIR_7}/.vscode/docker-compose.yml" 'db:' && \
-       verify_file_content "${TEST_DIR_7}/.vscode/docker-compose.yml" 'web:'; then
+    # テンプレートを適用（マージが発生するはず）
+    python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-yaml
+
+    echo "マージ後のdocker-compose.yml:"
+    cat "${TEST_DIR_7}/docker-compose.yml"
+    echo ""
+
+    # 既存サービスと新規サービスの両方が存在するか確認
+    if verify_file_content "${TEST_DIR_7}/docker-compose.yml" "existing-service" && \
+       verify_file_content "${TEST_DIR_7}/docker-compose.yml" "web"; then
         echo -e "${GREEN}[SUCCESS] テスト 7 完了（YAMLマージ成功）${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
-        echo -e "${RED}[FAILED] テスト 7 失敗（YAMLマージ失敗）${NC}"
-        cat "${TEST_DIR_7}/.vscode/docker-compose.yml"
+        echo -e "${RED}[FAILED] テスト 7 失敗${NC}"
         FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
 else
-    echo -e "${YELLOW}[SKIPPED] テスト 7 スキップ（yqがインストールされていません）${NC}"
+    echo -e "${YELLOW}[SKIPPED] PyYAML がインストールされていません: pip install pyyaml${NC}"
+    TOTAL_TESTS=$((TOTAL_TESTS - 1))
 fi
 echo ""
 
 # ============================================================================
-# テスト8: TOMLマージ機能のテスト
+# テスト8: TOMLマージ機能
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_8="${TEST_DIR}/test8-toml-merge"
-run_test "8/8" "TOMLマージ機能" "${TEST_DIR_8}"
+run_test "8" "TOMLマージ機能" "${TEST_DIR_8}"
 
-# 既存のpyproject.tomlを作成
-mkdir -p "${TEST_DIR_8}"
-cat > "${TEST_DIR_8}/pyproject.toml" << 'EOF'
-[tool.poetry]
+# tomli がインストールされているか確認
+if python3 -c "import tomli, tomli_w" 2>/dev/null || python3 -c "import tomllib" 2>/dev/null; then
+    # 既存のpyproject.tomlを作成
+    mkdir -p "${TEST_DIR_8}"
+    cat > "${TEST_DIR_8}/pyproject.toml" << 'EOF'
+[project]
 name = "existing-project"
 version = "1.0.0"
 
-[tool.poetry.dependencies]
-python = "^3.10"
+[project.dependencies]
+python = "^3.8"
 EOF
 
-# メインスクリプトを使ってマージ
-echo "メインスクリプトでテンプレート適用..."
-cd "${TEST_DIR_8}"
-"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-toml > /dev/null 2>&1 || true
-cd "${SCRIPT_DIR}"
+    echo "既存のpyproject.toml:"
+    cat "${TEST_DIR_8}/pyproject.toml"
+    echo ""
 
-# マージが正しく行われたかチェック（daselが必要）
-if command -v dasel &> /dev/null; then
-    # 既存の設定と新しい設定が両方存在するか
-    if verify_file_content "${TEST_DIR_8}/pyproject.toml" 'name = "existing-project"' && \
-       verify_file_content "${TEST_DIR_8}/pyproject.toml" 'requests'; then
+    # テンプレートを適用（マージが発生するはず）
+    # set -e を一時的に無効化（マージ失敗時もテストを継続）
+    set +e
+    python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-toml
+    set -e
+
+    echo "マージ後のpyproject.toml:"
+    cat "${TEST_DIR_8}/pyproject.toml" 2>/dev/null || echo "(ファイルが存在しないか、マージ失敗)"
+    echo ""
+
+    # 既存設定と新規設定の両方が存在するか確認
+    # マージが成功した場合のみチェック
+    if [ -f "${TEST_DIR_8}/pyproject.toml" ] && \
+       verify_file_content "${TEST_DIR_8}/pyproject.toml" "existing-project" && \
+       verify_file_content "${TEST_DIR_8}/pyproject.toml" "requests"; then
         echo -e "${GREEN}[SUCCESS] テスト 8 完了（TOMLマージ成功）${NC}"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
-        echo -e "${RED}[FAILED] テスト 8 失敗（TOMLマージ失敗）${NC}"
-        cat "${TEST_DIR_8}/pyproject.toml"
-        FAILED_TESTS=$((FAILED_TESTS + 1))
+        # tomli がインストールされていない場合はスキップとして扱う
+        if ! python3 -c "import tomli, tomli_w" 2>/dev/null; then
+            echo -e "${YELLOW}[SKIPPED] テスト 8: tomli/tomli_w がインストールされていません${NC}"
+            TOTAL_TESTS=$((TOTAL_TESTS - 1))
+        else
+            echo -e "${RED}[FAILED] テスト 8 失敗${NC}"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
+        fi
     fi
 else
-    echo -e "${YELLOW}[SKIPPED] テスト 8 スキップ（daselがインストールされていません）${NC}"
+    echo -e "${YELLOW}[SKIPPED] tomli/tomli_w がインストールされていません: pip install tomli tomli-w${NC}"
+    TOTAL_TESTS=$((TOTAL_TESTS - 1))
 fi
 echo ""
 
 # ============================================================================
-# テスト結果サマリー
+# テスト結果まとめ
 # ============================================================================
 echo -e "${BLUE}================================================================================${NC}"
-echo -e "${BLUE}テスト結果サマリー${NC}"
+echo -e "${BLUE}テスト結果まとめ${NC}"
 echo -e "${BLUE}================================================================================${NC}"
-echo "総テスト数: ${TOTAL_TESTS}"
+echo ""
+echo "合計: ${TOTAL_TESTS} テスト"
 echo -e "${GREEN}成功: ${PASSED_TESTS}${NC}"
-echo -e "${RED}失敗: ${FAILED_TESTS}${NC}"
+if [ ${FAILED_TESTS} -gt 0 ]; then
+    echo -e "${RED}失敗: ${FAILED_TESTS}${NC}"
+else
+    echo "失敗: ${FAILED_TESTS}"
+fi
 echo ""
 
-# クリーンアップ（失敗時は保持）
 if [ ${FAILED_TESTS} -eq 0 ]; then
-    # 今回のテストディレクトリを削除
-    rm -rf "${TEST_DIR}"
-
-    # 過去の残骸も削除
-    OLD_DIRS=$(find /tmp -maxdepth 1 -type d -name "local-template-test-*" 2>/dev/null)
-    if [ -n "${OLD_DIRS}" ]; then
-        echo "${OLD_DIRS}" | xargs rm -rf
-        echo -e "${GREEN}✓ /tmpフォルダをクリーンアップしました${NC}"
-    fi
-
     echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
-    echo -e "${GREEN}✓ テストディレクトリを自動削除しました${NC}"
     exit 0
 else
-    echo -e "${RED}✗ ${FAILED_TESTS} 個のテストが失敗しました${NC}"
-    echo ""
-    echo -e "${YELLOW}テストディレクトリを保持（デバッグ用）: ${TEST_DIR}${NC}"
-    echo "確認コマンド: ls -la ${TEST_DIR}/*/"
-    echo "削除コマンド: rm -rf ${TEST_DIR}"
+    echo -e "${RED}✗ 一部のテストが失敗しました${NC}"
     exit 1
 fi

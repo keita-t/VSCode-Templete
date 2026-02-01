@@ -3,18 +3,41 @@
 GitHubからVSCodeプロジェクト設定テンプレートを自動ダウンロードして配置するツールです。
 設定ファイルのマージによる柔軟な差分設定をサポートしています。
 
+**🎉 Python版に移行しました！** より安定した処理とクリーンなコードで、構造化ファイルのマージが確実に動作します。
+
 ## 🚀 クイックスタート
 
 ```bash
 # 付属のテンプレートを使用
-./vscode-project-startup.sh default/base
+./vscode-project-startup.py default/base
 
 # 独自テンプレートを作成して使用（推奨）
-./vscode-project-startup.sh my-template
+./vscode-project-startup.py my-template
 
 # テンプレートを組み合わせる（後が優先）
-./vscode-project-startup.sh default/base my-template
+./vscode-project-startup.py default/base my-template
+
+# ローカルテンプレートを使用（開発時）
+./vscode-project-startup.py -l ./templates -d test simple
 ```
+
+## 🔧 インストール
+
+### 必要なもの
+
+- Python 3.7 以上
+
+### 推奨パッケージ（マージ機能用）
+
+```bash
+# 必須（YAML/TOMLマージに必要）
+pip3 install pyyaml tomli tomli-w
+
+# Python 3.11以降の場合、tomliは不要（標準ライブラリのtomlibを使用）
+pip3 install pyyaml tomli-w
+```
+
+パッケージがインストールされていない場合、該当フォーマットのマージは上書きモードにフォールバックします。
 
 ## 📝 カスタムテンプレートの作り方
 
@@ -42,7 +65,7 @@ templates/
 |---------------|---------------------|
 | `vscode/`     | `.vscode/`          |
 | `snippets/`   | `.vscode/`          |
-| `git/`        | `.git/`             |
+| `git/`        | `.`（ルート）       |
 | `config/`     | `.`（ルート）       |
 | `docker/`     | `.`（ルート）       |
 
@@ -50,13 +73,13 @@ templates/
 
 ```bash
 # 作成したテンプレートを適用
-./vscode-project-startup.sh my-template
+./vscode-project-startup.py my-template
 
 # カテゴリで整理する場合（例：python/my-config）
-./vscode-project-startup.sh python/my-config
+./vscode-project-startup.py python/my-config
 
 # 複数テンプレートを組み合わせる（後が優先）
-./vscode-project-startup.sh default/base my-template
+./vscode-project-startup.py default/base my-template
 ```
 
 ### 設定ファイルのマージ
@@ -67,22 +90,21 @@ templates/
 
 以下の構造化ファイルは自動的にマージされます：
 
-- **JSON** (`.json`, `.code-snippets`) - `jq`を使用
-- **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用（`yq`でも可）
+- **JSON** (`.json`, `.code-snippets`) - Pythonネイティブ実装
+- **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用
 - **TOML** (`.toml`) - Python `tomli`/`tomli_w`を使用
-- **XML** (`.xml`) - `xmlstarlet`を使用（基本的な実装）
+- **XML** (`.xml`) - 基本的な実装
 
-**必要なツール：**
+**必要なパッケージ：**
 ```bash
-# macOS/Linux共通（推奨）
+# 推奨（すべてのマージ機能を有効化）
 pip3 install pyyaml tomli tomli-w
 
-# 追加ツール（オプション）
-brew install jq xmlstarlet  # macOS
-apt install jq xmlstarlet   # Ubuntu/Debian
-
-# ツールがない場合は自動的に上書きモードにフォールバック
+# Python 3.11以降の場合
+pip3 install pyyaml tomli-w  # tomliは標準ライブラリのtomlibを使用
 ```
+
+パッケージがインストールされていない場合は、自動的に上書きモードにフォールバックします。
 
 #### JSONファイルのマージ
 
@@ -93,11 +115,44 @@ apt install jq xmlstarlet   # Ubuntu/Debian
 cd /path/to/existing-project
 
 # 既存の.vscode/settings.jsonがあっても、新しい設定が追加される
-./vscode-project-startup.sh python/base
+./vscode-project-startup.py python/base
 
 # さらに追加の設定を重ねる
-./vscode-project-startup.sh python/pylance-lw
+./vscode-project-startup.py python/pylance-lw
 ```
+
+**マージの動作例：**
+
+既存の `settings.json`:
+```json
+{
+  "editor.fontSize": 16,
+  "editor.tabSize": 4,
+  "myCustomSetting": "preserve-this"
+}
+```
+
+テンプレートの `settings.json`:
+```json
+{
+  "editor.fontSize": 14,
+  "python.linting.enabled": true
+}
+```
+
+マージ後:
+```json
+{
+  "editor.fontSize": 14,
+  "editor.tabSize": 4,
+  "myCustomSetting": "preserve-this",
+  "python.linting.enabled": true
+}
+```
+
+- 既存の設定は保持される
+- 同じキーはテンプレートの値で上書き
+- 新しいキーは追加される
 
 **マージの動作：**
 - 新しいキーは追加される
