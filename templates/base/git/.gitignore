@@ -152,13 +152,48 @@ dist/
 build/
 out/
 target/
-*.egg-info/
-__pycache__/
-*.pyc
-*.pyo
 node_modules/
 bower_components/
 vendor/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+*.egg
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# ----------------------------------------------------------------------------
+# 仮想環境
+# ----------------------------------------------------------------------------
+
+# Python
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Node.js
+node_modules/
 
 # ----------------------------------------------------------------------------
 # テスト・カバレッジ
@@ -172,6 +207,66 @@ htmlcov/
 .pytest_cache/
 .tox/
 .nox/
+nosetests.xml
+coverage.xml
+*.py,cover
+.hypothesis/
+.nyc_output/
+
+# ----------------------------------------------------------------------------
+# Python開発ツール
+# ----------------------------------------------------------------------------
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython
+cython_debug/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
 
 # ----------------------------------------------------------------------------
 # その他
