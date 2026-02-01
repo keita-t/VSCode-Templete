@@ -117,7 +117,7 @@ class Config:
                 "*.toml",
                 "*.xml"
             ],
-            "github_file_patterns": [
+            "file_match_patterns": [
                 "settings.json",
                 "extensions.json",
                 "launch.json",
@@ -179,9 +179,9 @@ class Config:
         return self._config["merge_patterns"]
 
     @property
-    def github_file_patterns(self) -> List[str]:
+    def file_match_patterns(self) -> List[str]:
         """GitHubファイル探索で試行するファイルパターン"""
-        return self._config.get("github_file_patterns", [
+        return self._config.get("file_match_patterns", [
             "settings.json",
             "extensions.json",
             "launch.json",
@@ -205,18 +205,18 @@ class Config:
         template_config = templates.get(template_name, {})
         return template_config.get("file_mapping", {})
 
-    def get_template_github_file_patterns(self, template_name: str) -> List[str]:
-        """テンプレート固有のGitHubファイルパターンを取得（グローバル設定 + テンプレート固有）"""
+    def get_template_file_match_patterns(self, template_name: str) -> List[str]:
+        """テンプレート固有のファイルマッチパターンを取得（グローバル設定 + テンプレート固有）"""
         templates = self._config.get("templates", {})
         template_config = templates.get(template_name, {})
-        template_patterns = template_config.get("github_file_patterns", [])
-        
+        template_patterns = template_config.get("file_match_patterns", [])
+
         # グローバル設定 + テンプレート固有のパターンをマージ（重複除去）
-        combined = list(self.github_file_patterns)  # コピーを作成
+        combined = list(self.file_match_patterns)  # コピーを作成
         for pattern in template_patterns:
             if pattern not in combined:
                 combined.append(pattern)
-        
+
         return combined
 
 
@@ -514,7 +514,7 @@ class TemplateSource:
         """GitHubファイルを簡易リスト（テンプレート固有またはグローバル設定のパターンを試行）"""
         # 注: これは簡易実装。実際のGitHub API実装が必要
         # テンプレート固有のパターン、なければグローバル設定を使用
-        file_patterns = self.config.get_template_github_file_patterns(template_name)
+        file_patterns = self.config.get_template_file_match_patterns(template_name)
 
         found_files = []
         for pattern in file_patterns:

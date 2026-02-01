@@ -24,7 +24,7 @@
     "*.toml",
     "*.xml"
   ],
-  "github_file_patterns": [
+  "file_match_patterns": [
     "settings.json",
     "extensions.json",
     "launch.json",
@@ -49,7 +49,7 @@
         "requirements.txt": ".",
         "setup.py": "."
       },
-      "github_file_patterns": [
+      "file_match_patterns": [
         "setup.py",
         "setup.cfg",
         "MANIFEST.in",
