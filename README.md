@@ -82,14 +82,19 @@ pip install pyyaml tomli-w
     ".gitignore",
     ".dockerignore",
     ".editorconfig",
-    "Dockerfile",
-    "docker-compose.yml",
     "pyproject.toml",
     "requirements.txt",
     "package.json",
     "tsconfig.json"
   ],
   "templates": {
+    "docker": {
+      "file_match_patterns": [
+        "Dockerfile",
+        "docker-compose.yml",
+        ".dockerignore"
+      ]
+    },
     "python": {
       "folder_mapping": {
         "docs": "docs",

@@ -125,8 +125,6 @@ class Config:
                 ".gitignore",
                 ".dockerignore",
                 ".editorconfig",
-                "Dockerfile",
-                "docker-compose.yml",
                 "pyproject.toml",
                 "requirements.txt",
                 "package.json",
@@ -187,10 +185,12 @@ class Config:
             "launch.json",
             "tasks.json",
             ".gitignore",
-            "Dockerfile",
-            "docker-compose.yml",
+            ".dockerignore",
+            ".editorconfig",
             "pyproject.toml",
             "requirements.txt",
+            "package.json",
+            "tsconfig.json"
         ])
 
     def get_template_folder_mapping(self, template_name: str) -> Dict[str, str]:
@@ -511,11 +511,11 @@ class TemplateSource:
             if item.is_file():
                 rel_path = item.relative_to(full_path)
                 file_name = rel_path.name
-                
+
                 # パターンに一致するファイルのみ追加
                 if file_name in file_patterns:
                     files.append(str(rel_path))
-        
+
         return files
 
     def _list_github_files_simple(self, base_path: str, template_name: str) -> List[str]:

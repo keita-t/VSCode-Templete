@@ -32,14 +32,34 @@
     ".gitignore",
     ".dockerignore",
     ".editorconfig",
-    "Dockerfile",
-    "docker-compose.yml",
     "pyproject.toml",
     "requirements.txt",
     "package.json",
     "tsconfig.json"
   ],
   "templates": {
+    "docker": {
+      "file_match_patterns": [
+        "Dockerfile",
+        "docker-compose.yml",
+        ".dockerignore"
+      ]
+    },
+    "merge-yaml": {
+      "file_match_patterns": [
+        "docker-compose.yml"
+      ]
+    },
+    "merge-toml": {
+      "file_match_patterns": [
+        "pyproject.toml"
+      ]
+    },
+    "merge-json": {
+      "file_match_patterns": [
+        "settings.json"
+      ]
+    },
     "python": {
       "folder_mapping": {
         "docs": "docs",
