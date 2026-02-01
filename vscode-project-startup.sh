@@ -49,6 +49,7 @@ GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 # すべてのテンプレートに自動適用される基本マッピング
 declare -A DEFAULT_FOLDER_MAPPING=(
     ["vscode"]=".vscode"    # VSCode設定ファイル
+    ["snippets"]=".vscode"  # VSCodeスニペットファイル
     ["git"]=".git"          # Git関連ファイル
     ["config"]="."          # 汎用設定ファイル
     ["docker"]="."          # Docker関連ファイル
