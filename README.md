@@ -19,13 +19,14 @@
 
 ```
 VSCode-Templete/
-├── .github/
-│   └── copilot-instructions.md  # AI コーディング支援用ドキュメント
+├── docs/                         # ドキュメント
+│   ├── development.md            # 開発者向けドキュメント（AI Copilot用）
+│   └── testing.md                # テスト関連ドキュメント
 ├── .vscode/                      # プロジェクト設定
 │   ├── extensions.json           # 推奨拡張機能
 │   ├── settings.json             # VSCode設定
 │   └── tasks.json                # タスク定義（テスト実行など）
-├── templete/                     # テンプレートフォルダ
+├── templates/                    # テンプレートフォルダ
 │   ├── base/                     # 基本設定
 │   │   ├── git/.gitignore        # 汎用.gitignore
 │   │   └── vscode/settings.json  # 汎用VSCode設定
@@ -34,23 +35,24 @@ VSCode-Templete/
 │   │   └── vscode/
 │   │       ├── settings.json     # Python用設定
 │   │       └── python.code-snippets  # Pythonスニペット
-│   └── docker/                   # Docker環境
-│       ├── config/
-│       │   ├── Dockerfile
-│       │   └── docker-compose.yml
-│       └── vscode/settings.json  # Docker用設定
-├── test-templete/                # テスト用テンプレート
-│   ├── simple/                   # シンプルなテストテンプレート
-│   │   ├── vscode/settings.json
-│   │   ├── git/.gitignore
-│   │   └── config/.editorconfig
-│   └── advanced/                 # 高度なテストテンプレート
-│       └── vscode/settings.json
+│   ├── docker/                   # Docker環境
+│   │   ├── config/
+│   │   │   ├── Dockerfile
+│   │   │   └── docker-compose.yml
+│   │   └── vscode/settings.json  # Docker用設定
+│   └── test/                     # テスト用テンプレート
+│       ├── simple/               # シンプルなテストテンプレート
+│       │   ├── vscode/settings.json
+│       │   ├── git/.gitignore
+│       │   └── config/.editorconfig
+│       └── advanced/             # 高度なテストテンプレート
+│           └── vscode/settings.json
 ├── test/                         # テストスイート
-│   ├── manual/                   # 手動統合テスト
-│   │   └── test-template-dir-option.sh  # 統合テスト（5テストケース）
-│   └── README.md                 # テストドキュメント
+│   └── manual/                   # 手動統合テスト
+│       ├── test-local-templates.sh   # ローカルテスト（オフライン）
+│       └── test-github-download.sh   # GitHubテスト（オンライン）
 ├── vscode-project-startup.sh     # メインスクリプト
+├── .github_token.example         # トークンファイル例
 ├── .gitignore
 └── README.md                     # このファイル
 ```
@@ -165,7 +167,7 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 ### 1. フォルダ構造を作成
 
 ```bash
-templete/
+templates/
 └── my-template/          # 任意の名前
     ├── vscode/           # .vscode/に配置
     │   ├── settings.json
@@ -225,36 +227,42 @@ Python開発環境の設定
 
 ### （追加可能）
 
-独自のテンプレートを `templete/` 配下に作成できます
+独自のテンプレートを `templates/` 配下に作成できます
 
 ## 🤝 貢献
 
 1. このリポジトリをFork
-2. `templete/` 配下に新しいテンプレートを追加
+2. `templates/` 配下に新しいテンプレートを追加
 3. Pull Requestを作成
 
 ## 🧪 テスト
 
-### 統合テスト
+### ローカルテスト（オフライン）
 
-エンドツーエンドでの動作確認：
+GitHub接続不要で高速にテスト：
+
+```bash
+# ローカルテンプレートを使用したテスト（5つのテストケース）
+./test/manual/test-local-templates.sh
+```
+
+### GitHubテスト（オンライン）
+
+GitHub APIとダウンロード機能をテスト：
 
 ```bash
 # プライベートリポジトリの場合はトークン設定
 export GITHUB_TOKEN='your_token'
 
-# 統合テスト実行（5つのテストケース）
-./test/manual/test-template-dir-option.sh
+# GitHubからダウンロードするテスト（5つのテストケース）
+./test/manual/test-github-download.sh
 ```
 
 **テスト内容：**
-1. デフォルト動作（templete/ から取得）
-2. test-templete/simple（--template-dir オプション）
-3. test-templete/advanced（別のテンプレート）
-4. 複数テンプレート組み合わせ
-5. 既存ファイルとのJSONマージ＆バックアップ
+- ローカルテスト: ファイル配置、JSON マージ、ディレクトリ構造
+- GitHubテスト: API認証、ダウンロード、テンプレートディレクトリオプション
 
-詳細は [test/README.md](test/README.md) を参照してください。
+詳細は [docs/testing.md](docs/testing.md) を参照してください。
 
 ## 📄 ライセンス
 

@@ -3,7 +3,7 @@
 # ============================================================================
 # ローカルテンプレートテスト
 # ============================================================================
-# ローカルのtest-templeteディレクトリを直接使用してテストします
+# ローカルのtemplates/testディレクトリを直接使用してテストします
 # GitHubアクセス不要で高速にテストできます
 #
 # 【目的】
@@ -15,7 +15,7 @@
 # ./test/manual/test-local-templates.sh
 #
 # 【前提条件】
-# - test-templeteディレクトリがローカルに存在すること
+# - templates/testディレクトリがローカルに存在すること
 # - GitHubアクセス不要（完全オフラインで実行可能）
 # ============================================================================
 
@@ -31,7 +31,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-TEST_TEMPLETE_DIR="${SCRIPT_DIR}/test-templete"
+TEST_TEMPLETE_DIR="${SCRIPT_DIR}/templates/test"
 TEST_DIR="/tmp/local-template-test-$(date +%s)"
 
 echo -e "${BLUE}================================${NC}"
@@ -40,14 +40,14 @@ echo -e "${BLUE}（GitHubアクセス不要）${NC}"
 echo -e "${BLUE}================================${NC}"
 echo ""
 
-# test-templeteディレクトリの存在確認
+# templates/testディレクトリの存在確認
 if [ ! -d "${TEST_TEMPLETE_DIR}" ]; then
-    echo -e "${RED}エラー: test-templeteディレクトリが見つかりません${NC}"
+    echo -e "${RED}エラー: templates/testディレクトリが見つかりません${NC}"
     echo "場所: ${TEST_TEMPLETE_DIR}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ test-templeteディレクトリを確認: ${TEST_TEMPLETE_DIR}${NC}"
+echo -e "${GREEN}✓ templates/testディレクトリを確認: ${TEST_TEMPLETE_DIR}${NC}"
 echo ""
 
 # テスト関数

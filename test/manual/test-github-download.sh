@@ -41,13 +41,19 @@ echo -e "${BLUE}（GitHub API経由でのファイル取得）${NC}"
 echo -e "${BLUE}================================================================================${NC}"
 echo ""
 
-# GitHub Token チェック（メインスクリプトがトークンを読み込むので、警告のみ）
-# 環境変数、.github_token、~/.config/vscode-templates/tokenのいずれかがあればOK
+# GitHub Token チェックとロード（テスト前に一度だけ実行）
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+    # .github_tokenがあれば環境変数にロード
+    if [ -f "${SCRIPT_DIR}/.github_token" ]; then
+        export GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "${SCRIPT_DIR}/.github_token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
+    elif [ -f "$HOME/.config/vscode-templates/token" ]; then
+        export GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "$HOME/.config/vscode-templates/token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
+    fi
+fi
+
 TOKEN_WARNING=""
 if [ -z "${GITHUB_TOKEN:-}" ]; then
-    if [ ! -f ".github_token" ] && [ ! -f "$HOME/.config/vscode-templates/token" ]; then
-        TOKEN_WARNING="true"
-    fi
+    TOKEN_WARNING="true"
 fi
 
 if [ -n "$TOKEN_WARNING" ]; then
@@ -66,9 +72,10 @@ run_test() {
 
     echo -e "${YELLOW}テスト: ${test_name}${NC}"
     mkdir -p "${test_dir}"
-    cd "${test_dir}"
-
-    if "${cmd[@]}"; then
+    
+    # カレントディレクトリはSCRIPT_DIRを維持し、-Cなしで実行
+    # スクリプトの最後の引数としてテストディレクトリを指定
+    if (cd "${test_dir}" && "${cmd[@]}"); then
         echo -e "${GREEN}✓ 成功${NC}"
         echo ""
         return 0
@@ -104,12 +111,12 @@ fi
 echo ""
 
 # ============================================================================
-# テスト2: test-templeteディレクトリ指定（simple）
+# テスト2: templates/testディレクトリ指定（simple）
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
-TEST_DIR_2="${TEST_DIR}/test2-test-templete-simple"
-echo -e "${BLUE}--- テスト2: -d test-templete simple ---${NC}"
-if run_test "test-templete/simple" "${TEST_DIR_2}" "${SCRIPT_PATH}" -d test-templete simple; then
+TEST_DIR_2="${TEST_DIR}/test2-templates-test-simple"
+echo -e "${BLUE}--- テスト2: -d templates/test simple ---${NC}"
+if run_test "templates/test/simple" "${TEST_DIR_2}" "${SCRIPT_PATH}" -d templates/test simple; then
     # ファイル存在確認
     if [ -f "${TEST_DIR_2}/.gitignore" ] && \
        [ -f "${TEST_DIR_2}/.vscode/settings.json" ] && \
@@ -142,20 +149,21 @@ fi
 echo ""
 
 # ============================================================================
-# テスト3: test-templeteディレクトリ指定（advanced）
+# テスト3: templates/testディレクトリ指定（advanced）
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
-TEST_DIR_3="${TEST_DIR}/test3-test-templete-advanced"
-echo -e "${BLUE}--- テスト3: --template-dir test-templete advanced ---${NC}"
-if run_test "test-templete/advanced" "${TEST_DIR_3}" "${SCRIPT_PATH}" --template-dir test-templete advanced; then
+TEST_DIR_3="${TEST_DIR}/test3-templates-test-advanced"
+echo -e "${BLUE}--- テスト3: --template-dir templates/test advanced ---${NC}"
+if run_test "templates/test/advanced" "${TEST_DIR_3}" "${SCRIPT_PATH}" --template-dir templates/test advanced; then
     if [ -f "${TEST_DIR_3}/.vscode/settings.json" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
 
-        if grep -q "advancedTemplate" "${TEST_DIR_3}/.vscode/settings.json"; then
-            echo -e "${GREEN}✓ advanced テンプレートの内容確認OK${NC}"
+        if grep -q '"editor.fontSize": 16' "${TEST_DIR_3}/.vscode/settings.json"; then
+            echo -e "${GREEN}✓ advanced テンプレートの内容確認OK（fontSize: 16）${NC}"
             PASSED_TESTS=$((PASSED_TESTS + 1))
         else
             echo -e "${RED}✗ advanced テンプレートの内容が期待と異なる${NC}"
+            cat "${TEST_DIR_3}/.vscode/settings.json"
             FAILED_TESTS=$((FAILED_TESTS + 1))
         fi
     else
@@ -168,12 +176,12 @@ fi
 echo ""
 
 # ============================================================================
-# テスト4: 複数テンプレートの組み合わせ（test-templete）
+# テスト4: 複数テンプレートの組み合わせ（templates/test）
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_4="${TEST_DIR}/test4-multiple-templates"
-echo -e "${BLUE}--- テスト4: -d test-templete simple advanced ---${NC}"
-if run_test "test-templete 複数テンプレート" "${TEST_DIR_4}" "${SCRIPT_PATH}" -d test-templete simple advanced; then
+echo -e "${BLUE}--- テスト4: -d templates/test simple advanced ---${NC}"
+if run_test "templates/test 複数テンプレート" "${TEST_DIR_4}" "${SCRIPT_PATH}" -d templates/test simple advanced; then
     if [ -f "${TEST_DIR_4}/.vscode/settings.json" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
 
@@ -213,7 +221,7 @@ cat "${TEST_DIR_5}/.vscode/settings.json"
 echo ""
 
 cd "${TEST_DIR_5}"
-if "${SCRIPT_PATH}" -d test-templete simple; then
+if "${SCRIPT_PATH}" -d templates/test simple; then
     echo -e "${GREEN}✓ スクリプト実行成功${NC}"
 
     # マージ確認

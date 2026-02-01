@@ -21,14 +21,14 @@ NC='\033[0m' # No Color
 # ============================================================================
 #
 # 【テンプレート設定の追加方法】
-# 1. templete/<テンプレート名>/ フォルダを作成
+# 1. templates/<テンプレート名>/ フォルダを作成
 # 2. 以下の命名規則で設定を追加（オプション）:
 #    - <テンプレート名を大文字>_FOLDER_MAPPING
 #    - <テンプレート名を大文字>_FILE_MAPPING
 # 3. 設定がない場合は、デフォルト設定のみが自動適用されます
 #
 # 【例】
-#   templete/rust/ の場合:
+#   templates/rust/ の場合:
 #     declare -A RUST_FOLDER_MAPPING=(["cargo"]="." ["src"]="src")
 #     declare -A RUST_FILE_MAPPING=(["Cargo.toml"]=".")
 #
