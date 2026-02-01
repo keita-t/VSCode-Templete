@@ -36,9 +36,14 @@ NC='\033[0m' # No Color
 
 # --- GitHubリポジトリ設定 ---
 # テンプレートを取得するGitHubリポジトリの情報
-GITHUB_USER="YOUR_GITHUB_USERNAME"  # ← 【必須】実際のGitHubユーザー名に変更してください
+GITHUB_USER="keita-t"  # ← 【必須】実際のGitHubユーザー名に変更してください
 REPO_NAME="VSCode-Templete"         # リポジトリ名
 BRANCH="main"                       # ブランチ名（mainまたはmaster）
+
+# --- 認証設定（プライベートリポジトリの場合に必要） ---
+# GitHub Personal Access Token（環境変数GITHUB_TOKENから自動取得）
+# トークンが設定されていない場合は公開リポジトリとしてアクセス
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
 # --- デフォルト設定（全テンプレート共通） ---
 # すべてのテンプレートに自動適用される基本マッピング
@@ -184,7 +189,11 @@ get_template_files() {
 
     # GitHub APIでファイルリストを取得
     local response
-    response=$(curl -s "${api_url}")
+    if [ -n "$GITHUB_TOKEN" ]; then
+        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "${api_url}")
+    else
+        response=$(curl -s "${api_url}")
+    fi
 
     # ファイル名を抽出
     local files
@@ -234,8 +243,13 @@ usage() {
     echo -e "${BLUE}カスタム設定（オプション）:${NC}"
     echo "  デフォルトと異なる配置が必要な場合、スクリプト内に設定を追加:"
     echo "    declare -A MY_TEMPLATE_FOLDER_MAPPING=([\"特殊フォルダ\"]=\"配置先\")"
-    echo "    declare -A MY_TEMPLATE_FILE_MAPPING=([\"特殊ファイル\"]=\"配置先\")"
-    exit 1
+    echo "    declare -A MY_TEMPLATE_FILE_MAPPING=([\"特殊ファイル\"]=\"配置先\")"    echo ""
+    echo -e "${BLUE}プライベートリポジトリの場合:${NC}"
+    echo "  環境変数GITHUB_TOKENにPersonal Access Tokenを設定してください:"
+    echo "    export GITHUB_TOKEN='your_token_here'"
+    echo "    $0 python"
+    echo "  トークンの作成: GitHub Settings → Developer settings → Personal access tokens"
+    echo "  必要な権限: repo (Full control of private repositories)"    exit 1
 }
 
 # ----------------------------------------------------------------------------
@@ -331,12 +345,24 @@ for file in "${FILES[@]}"; do
 
     # ファイルをダウンロード
     echo "  ダウンロード中: ${file}"
-    if curl -s -f -o "${dest_file}" "${url}"; then
-        echo -e "    ${GREEN}✓ 成功${NC}"
-        ((SUCCESS_COUNT++))
+    if [ -n "$GITHUB_TOKEN" ]; then
+        # トークン認証付きでダウンロード
+        if curl -s -f -H "Authorization: token $GITHUB_TOKEN" -o "${dest_file}" "${url}"; then
+            echo -e "    ${GREEN}✓ 成功${NC}"
+            ((SUCCESS_COUNT++))
+        else
+            echo -e "    ${RED}✗ 失敗${NC}"
+            ((FAIL_COUNT++))
+        fi
     else
-        echo -e "    ${RED}✗ 失敗${NC}"
-        ((FAIL_COUNT++))
+        # 認証なしでダウンロード（公開リポジトリ）
+        if curl -s -f -o "${dest_file}" "${url}"; then
+            echo -e "    ${GREEN}✓ 成功${NC}"
+            ((SUCCESS_COUNT++))
+        else
+            echo -e "    ${RED}✗ 失敗${NC}"
+            ((FAIL_COUNT++))
+        fi
     fi
 done
 
