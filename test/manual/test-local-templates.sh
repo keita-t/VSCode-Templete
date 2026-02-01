@@ -55,11 +55,11 @@ run_test() {
     local test_num="$1"
     local test_name="$2"
     local test_dir="$3"
-    
+
     echo -e "${BLUE}================================================================================${NC}"
     echo -e "${BLUE}テスト ${test_num}: ${test_name}${NC}"
     echo -e "${BLUE}================================================================================${NC}"
-    
+
     mkdir -p "${test_dir}"
     return 0
 }
@@ -204,23 +204,23 @@ echo ""
 # jqが利用可能な場合のみマージテスト
 if command -v jq &> /dev/null; then
     echo "jq利用可能、マージを実行..."
-    
+
     # simpleテンプレートのsettings.jsonとマージ
     if [ -f "${TEST_TEMPLETE_DIR}/simple/vscode/settings.json" ]; then
         # バックアップ作成
         cp "${TEST_DIR_4}/.vscode/settings.json" "${TEST_DIR_4}/.vscode/settings.json.backup"
-        
+
         # jqでマージ（右側が優先）
         jq -s '.[0] * .[1]' \
             "${TEST_DIR_4}/.vscode/settings.json.backup" \
             "${TEST_TEMPLETE_DIR}/simple/vscode/settings.json" \
             > "${TEST_DIR_4}/.vscode/settings.json.tmp"
         mv "${TEST_DIR_4}/.vscode/settings.json.tmp" "${TEST_DIR_4}/.vscode/settings.json"
-        
+
         echo "マージ後のsettings.json:"
         cat "${TEST_DIR_4}/.vscode/settings.json"
         echo ""
-        
+
         # 検証: 既存設定が保持され、新しい設定が追加されている
         if verify_file_content "${TEST_DIR_4}/.vscode/settings.json" '"existingSetting": "should-be-preserved"' && \
            verify_file_content "${TEST_DIR_4}/.vscode/settings.json" '"editor.fontSize": 14' && \
@@ -431,14 +431,14 @@ echo ""
 if [ ${FAILED_TESTS} -eq 0 ]; then
     # 今回のテストディレクトリを削除
     rm -rf "${TEST_DIR}"
-    
+
     # 過去の残骸も削除
     OLD_DIRS=$(find /tmp -maxdepth 1 -type d -name "local-template-test-*" 2>/dev/null)
     if [ -n "${OLD_DIRS}" ]; then
         echo "${OLD_DIRS}" | xargs rm -rf
         echo -e "${GREEN}✓ /tmpフォルダをクリーンアップしました${NC}"
     fi
-    
+
     echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
     echo -e "${GREEN}✓ テストディレクトリを自動削除しました${NC}"
     exit 0

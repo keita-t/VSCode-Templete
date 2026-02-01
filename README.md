@@ -68,20 +68,18 @@ templates/
 以下の構造化ファイルは自動的にマージされます：
 
 - **JSON** (`.json`, `.code-snippets`) - `jq`を使用
-- **YAML** (`.yaml`, `.yml`) - `yq`を使用
-- **TOML** (`.toml`) - `dasel`を使用
+- **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用（`yq`でも可）
+- **TOML** (`.toml`) - Python `tomli`/`tomli_w`を使用
 - **XML** (`.xml`) - `xmlstarlet`を使用（基本的な実装）
 
 **必要なツール：**
 ```bash
-# macOS
-brew install jq yq dasel xmlstarlet
+# macOS/Linux共通（推奨）
+pip3 install pyyaml tomli tomli-w
 
-# Ubuntu/Debian
-apt install jq
-snap install yq
-# dasel: https://github.com/TomWright/dasel
-# xmlstarlet: apt install xmlstarlet
+# 追加ツール（オプション）
+brew install jq xmlstarlet  # macOS
+apt install jq xmlstarlet   # Ubuntu/Debian
 
 # ツールがない場合は自動的に上書きモードにフォールバック
 ```

@@ -494,18 +494,59 @@ merge_yaml_files() {
     local new_file="$2"
     local output_file="$3"
 
+    # Python + PyYAMLでマージ（最も信頼性が高い）
+    if command -v python3 &> /dev/null; then
+        python3 -c "
+import sys
+try:
+    import yaml
+except ImportError:
+    sys.exit(1)
+
+def deep_merge(base, new):
+    if not isinstance(base, dict) or not isinstance(new, dict):
+        return new
+    for key, value in new.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            base[key] = deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+with open('${base_file}', 'r') as f:
+    base = yaml.safe_load(f)
+
+with open('${new_file}', 'r') as f:
+    new = yaml.safe_load(f)
+
+result = deep_merge(base, new)
+
+with open('${output_file}', 'w') as f:
+    yaml.dump(result, f, default_flow_style=False, allow_unicode=True)
+" 2>/dev/null && return 0
+    fi
+
     # yqがインストールされているかチェック
     if ! command -v yq &> /dev/null; then
-        echo -e "  ${YELLOW}注意: yqがインストールされていないため、YAMLマージをスキップ（上書き）${NC}"
+        echo -e "  ${YELLOW}注意: PyYAMLまたはyqがインストールされていないため、YAMLマージをスキップ（上書き）${NC}"
+        echo -e "  ${YELLOW}インストール: pip install pyyaml${NC}"
         return 1
     fi
 
     # YAMLファイルをマージ（深い階層まで統合）
-    # yq eval-all '. as $item ireduce ({}; . * $item)' で複数ファイルをマージ
+    # yqのバージョンに応じて構文が異なるため、複数の方法を試す
+    # yq v4以降: eval-all '. as $item ireduce ({}; . * $item)'
     if yq eval-all '. as $item ireduce ({}; . * $item)' "${base_file}" "${new_file}" > "${output_file}" 2>/dev/null; then
+        return 0
+    # yq v4以降（別の構文）: ea '. as $item ireduce ({}; . * $item)'
+    elif yq ea '. as $item ireduce ({}; . * $item)' "${base_file}" "${new_file}" > "${output_file}" 2>/dev/null; then
+        return 0
+    # yq v3: merge
+    elif yq merge "${base_file}" "${new_file}" > "${output_file}" 2>/dev/null; then
         return 0
     else
         echo -e "  ${YELLOW}注意: YAMLマージに失敗（上書き）${NC}"
+        echo -e "  ${YELLOW}PyYAMLのインストールを推奨: pip install pyyaml${NC}"
         return 1
     fi
 }
@@ -515,21 +556,69 @@ merge_toml_files() {
     local new_file="$2"
     local output_file="$3"
 
-    # toml-cliまたはdaselがインストールされているかチェック
-    if command -v dasel &> /dev/null; then
-        # daselを使用してTOMLをマージ
-        if dasel -f "${base_file}" -r toml -w toml > "${output_file}" 2>/dev/null && \
-           dasel -f "${new_file}" -r toml | dasel -f "${output_file}" -r toml -w toml put -t string -v - 2>/dev/null; then
+    # Python + tomlモジュールでマージ（最も信頼性が高い）
+    if command -v python3 &> /dev/null; then
+        # 一時的なPythonスクリプトを作成
+        local temp_script=$(mktemp)
+        cat > "${temp_script}" << 'PYTHON_SCRIPT_END'
+import sys
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        sys.exit(1)
+
+try:
+    import tomli_w
+except ImportError:
+    sys.exit(1)
+
+base_file = sys.argv[1]
+new_file = sys.argv[2]
+output_file = sys.argv[3]
+
+with open(base_file, 'rb') as f:
+    base = tomllib.load(f)
+
+with open(new_file, 'rb') as f:
+    new = tomllib.load(f)
+
+def deep_merge(base, new):
+    for key, value in new.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+result = deep_merge(base, new)
+
+with open(output_file, 'wb') as f:
+    tomli_w.dump(result, f)
+PYTHON_SCRIPT_END
+
+        if python3 "${temp_script}" "${base_file}" "${new_file}" "${output_file}" 2>/dev/null; then
+            rm -f "${temp_script}"
             return 0
         fi
+        rm -f "${temp_script}"
     fi
-    
-    echo -e "  ${YELLOW}注意: daselがインストールされていないため、TOMLマージをスキップ（上書き）${NC}"
-    return 1
-}
 
-merge_xml_files() {
-    local base_file="$1"
+    # daselを使用してTOMLをマージ
+    if command -v dasel &> /dev/null; then
+        # daselでは完全なマージが難しいため、簡易的な実装
+        if cp "${base_file}" "${output_file}" 2>/dev/null; then
+            # 新しいファイルの各キーをbaseに追加（完全ではない）
+            echo -e "  ${YELLOW}注意: daselでのマージは不完全（Python + tomli/tomli_wのインストールを推奨）${NC}"
+            return 1
+        fi
+    fi
+
+    echo -e "  ${YELLOW}注意: TOMLマージツールがないため、スキップ（上書き）${NC}"
+    echo -e "  ${YELLOW}インストール: pip install tomli tomli-w${NC}"
     local new_file="$2"
     local output_file="$3"
 
@@ -545,7 +634,7 @@ merge_xml_files() {
         echo -e "  ${YELLOW}注意: XMLマージは基本的な実装のみ（上書き）${NC}"
         return 1
     fi
-    
+
     return 1
 }
 

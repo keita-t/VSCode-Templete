@@ -15,7 +15,7 @@
 **重要なマッピング** (31-63行目):
 - `DEFAULT_FOLDER_MAPPING`: テンプレートのサブディレクトリをプロジェクト内の場所にマップ
   - `vscode/` → `.vscode/` (VSCode設定)
-  - `git/` → `.` (プロジェクトルート、.gitignore用)
+  - `git/` → `.git` (git設定)
   - `config/` → `.` (.editorconfigなど用)
 - `DEFAULT_MERGE_SETTING`: マージするファイルのパターン（上書きしない）: `*.json`, `*.code-snippets`
 - テンプレート固有のマッピング: 例）`PYTHON_FOLDER_MAPPING`は`docs/`と`tests/`ディレクトリを追加
