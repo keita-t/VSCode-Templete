@@ -8,14 +8,11 @@
 # 基本的な使い方
 ./vscode-project-startup.sh default/base
 
-# Python環境をセットアップ
+# テンプレートを組み合わせて使用
 ./vscode-project-startup.sh default/base python/base
 
-# Python + Pylance最適化
-./vscode-project-startup.sh default/base python/base python/pylance-lw
-
-# 複数のテンプレートを組み合わせ
-./vscode-project-startup.sh default/base python/base docker/base
+# 独自のテンプレートも作成可能（詳細は後述）
+./vscode-project-startup.sh default/base my-custom-template
 ```
 
 ## 📁 プロジェクト構造
@@ -67,27 +64,19 @@ VSCode-Templete/
 
 ## ⚙️ セットアップ
 
-### 1. GitHubユーザー名を設定
-
-`vscode-project-startup.sh` を開き、以下を編集：
-
-```bash
-GITHUB_USER="YOUR_GITHUB_USERNAME"  # ← 実際のユーザー名に変更
-```
-
-### 2. プロジェクトフォルダで実行
+### 1. プロジェクトフォルダで実行
 
 ```bash
 # プロジェクトディレクトリに移動
 cd /path/to/your/project
 
 # テンプレートを適用
-/path/to/vscode-project-startup.sh base python
+/path/to/vscode-project-startup.sh default/base python/base
 ```
 
-### 3. GitHub Personal Access Token（オプション）
+### 2. GitHub Personal Access Token（オプション）
 
-**📢 このリポジトリは現在パブリックです。トークンなしでも使用できます。**
+**📢 このリポジトリはパブリックです。トークンなしでも使用できます。**
 
 ただし、以下の場合はGitHub Personal Access Tokenの設定を推奨します：
 - プライベートリポジトリをフォークして使用する場合
@@ -143,47 +132,40 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 必要な権限: `repo` (Full control of private repositories)
 
 **⚠️ セキュリティ注意:**
-- このリポジトリはパブリックなので、通常はトークン不要です
 - トークンを使用する場合、`.github_token`ファイルは`.gitignore`に含まれています（コミットされません）
 - ファイルのパーミッションは必ず`600`または`400`に設定してください
 - 環境変数を使用する場合は、使用後に`unset GITHUB_TOKEN`でトークンを削除してください
 
 ## 💡 使用例
 
-### 基本設定のみ
+**このツールは拡張可能な設計です。**  
+既存のテンプレート（`default/base`、`python/base`など）はあくまで例です。  
+独自のテンプレートを作成して、プロジェクトに合わせた設定を自由に配置できます。
+
+### 基本的な使い方
 
 ```bash
+# 単一テンプレート
 ./vscode-project-startup.sh default/base
-```
 
-### Python開発環境
-
-```bash
-# Python基本設定
+# 複数テンプレートを組み合わせ（後から指定したものが優先）
 ./vscode-project-startup.sh default/base python/base
 
-# Python + Pylance最適化（メモリ使用量を削減）
+# 独自テンプレートの使用
+./vscode-project-startup.sh default/base my-project/dev
+```
+
+### テンプレートの組み合わせ例
+
+```bash
+# Python開発環境
 ./vscode-project-startup.sh default/base python/base python/pylance-lw
-```
 
-### メモリ最適化設定
-
-```bash
-# 軽量なVSCode設定
-./vscode-project-startup.sh default/base default/lightweight
-```
-
-### Docker開発環境
-
-```bash
+# Docker環境
 ./vscode-project-startup.sh default/base docker/base
-```
 
-### 階層的な設定
-
-```bash
-# 基本 → カテゴリ → 特殊設定の順で適用
-./vscode-project-startup.sh default/base python/base python/pylance-lw
+# メモリ最適化設定
+./vscode-project-startup.sh default/base default/lightweight
 ```
 
 ## 📝 テンプレートの作成
@@ -263,7 +245,9 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 
 **注意:** `snippets/`フォルダは`.vscode/`に配置されるため、VSCodeスニペットの管理に最適です。
 
-## 📚 テンプレート一覧
+## 📚 付属テンプレート（例）
+
+以下は参考例として用意されているテンプレートです。独自のテンプレートを作成することを推奨します。
 
 ### default/base
 
