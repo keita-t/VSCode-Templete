@@ -293,6 +293,130 @@ fi
 echo ""
 
 # ============================================================================
+# テスト6: JSONマージ機能のテスト
+# ============================================================================
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+TEST_DIR_6="${TEST_DIR}/test6-json-merge"
+run_test "6/8" "JSONマージ機能" "${TEST_DIR_6}"
+
+# 既存のsettings.jsonを作成
+mkdir -p "${TEST_DIR_6}/.vscode"
+cat > "${TEST_DIR_6}/.vscode/settings.json" << 'EOF'
+{
+  "editor.fontSize": 12,
+  "editor.tabSize": 2,
+  "files.autoSave": "onFocusChange"
+}
+EOF
+
+# メインスクリプトを使ってマージ（--template-dirオプションを使用）
+echo "メインスクリプトでテンプレート適用..."
+cd "${TEST_DIR_6}"
+"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-json > /dev/null 2>&1 || true
+cd "${SCRIPT_DIR}"
+
+# マージが正しく行われたかチェック（jqが必要）
+if command -v jq &> /dev/null; then
+    # 既存の設定が保持され、新しい設定が追加されている
+    if verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"files.autoSave": "onFocusChange"' && \
+       verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"editor.tabSize": 4' && \
+       verify_file_content "${TEST_DIR_6}/.vscode/settings.json" '"python.linting.enabled": true'; then
+        echo -e "${GREEN}[SUCCESS] テスト 6 完了（JSONマージ成功）${NC}"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+    else
+        echo -e "${RED}[FAILED] テスト 6 失敗（JSONマージ失敗）${NC}"
+        cat "${TEST_DIR_6}/.vscode/settings.json"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+    fi
+else
+    echo -e "${YELLOW}[SKIPPED] テスト 6 スキップ（jqがインストールされていません）${NC}"
+fi
+echo ""
+
+# ============================================================================
+# テスト7: YAMLマージ機能のテスト
+# ============================================================================
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+TEST_DIR_7="${TEST_DIR}/test7-yaml-merge"
+run_test "7/8" "YAMLマージ機能" "${TEST_DIR_7}"
+
+# 既存のdocker-compose.ymlを作成
+mkdir -p "${TEST_DIR_7}/.vscode"
+cat > "${TEST_DIR_7}/.vscode/docker-compose.yml" << 'EOF'
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: secret
+EOF
+
+# メインスクリプトを使ってマージ
+echo "メインスクリプトでテンプレート適用..."
+cd "${TEST_DIR_7}"
+"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-yaml > /dev/null 2>&1 || true
+cd "${SCRIPT_DIR}"
+
+# マージが正しく行われたかチェック（yqが必要）
+if command -v yq &> /dev/null; then
+    # 既存のdbサービスと新しいwebサービスが両方存在するか
+    if verify_file_content "${TEST_DIR_7}/.vscode/docker-compose.yml" 'db:' && \
+       verify_file_content "${TEST_DIR_7}/.vscode/docker-compose.yml" 'web:'; then
+        echo -e "${GREEN}[SUCCESS] テスト 7 完了（YAMLマージ成功）${NC}"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+    else
+        echo -e "${RED}[FAILED] テスト 7 失敗（YAMLマージ失敗）${NC}"
+        cat "${TEST_DIR_7}/.vscode/docker-compose.yml"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+    fi
+else
+    echo -e "${YELLOW}[SKIPPED] テスト 7 スキップ（yqがインストールされていません）${NC}"
+fi
+echo ""
+
+# ============================================================================
+# テスト8: TOMLマージ機能のテスト
+# ============================================================================
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+TEST_DIR_8="${TEST_DIR}/test8-toml-merge"
+run_test "8/8" "TOMLマージ機能" "${TEST_DIR_8}"
+
+# 既存のpyproject.tomlを作成
+mkdir -p "${TEST_DIR_8}"
+cat > "${TEST_DIR_8}/pyproject.toml" << 'EOF'
+[tool.poetry]
+name = "existing-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+EOF
+
+# メインスクリプトを使ってマージ
+echo "メインスクリプトでテンプレート適用..."
+cd "${TEST_DIR_8}"
+"${SCRIPT_DIR}/vscode-project-startup.sh" --template-dir "${SCRIPT_DIR}/templates/test" merge-toml > /dev/null 2>&1 || true
+cd "${SCRIPT_DIR}"
+
+# マージが正しく行われたかチェック（daselが必要）
+if command -v dasel &> /dev/null; then
+    # 既存の設定と新しい設定が両方存在するか
+    if verify_file_content "${TEST_DIR_8}/pyproject.toml" 'name = "existing-project"' && \
+       verify_file_content "${TEST_DIR_8}/pyproject.toml" 'requests'; then
+        echo -e "${GREEN}[SUCCESS] テスト 8 完了（TOMLマージ成功）${NC}"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+    else
+        echo -e "${RED}[FAILED] テスト 8 失敗（TOMLマージ失敗）${NC}"
+        cat "${TEST_DIR_8}/pyproject.toml"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+    fi
+else
+    echo -e "${YELLOW}[SKIPPED] テスト 8 スキップ（daselがインストールされていません）${NC}"
+fi
+echo ""
+
+# ============================================================================
 # テスト結果サマリー
 # ============================================================================
 echo -e "${BLUE}================================================================================${NC}"
