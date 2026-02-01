@@ -284,7 +284,7 @@ usage() {
 load_github_token
 
 # デフォルトのテンプレートディレクトリ
-TEMPLATE_DIR="templete"
+TEMPLATE_DIR="templates"
 
 # 引数解析
 TEMPLATE_TYPES=()

@@ -92,7 +92,7 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 
 # ============================================================================
-# テスト1: デフォルトのtempleteディレクトリ（従来の動作）
+# テスト1: デフォルトのtemplatesディレクトリ（従来の動作）
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_1="${TEST_DIR}/test1-default"
@@ -186,8 +186,8 @@ if run_test "templates/test 複数テンプレート" "${TEST_DIR_4}" "${SCRIPT_
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
 
         # JSONマージ確認（後から指定したadvancedが優先）
-        if grep -q "advancedTemplate" "${TEST_DIR_4}/.vscode/settings.json"; then
-            echo -e "${GREEN}✓ 後から指定したテンプレートが優先されている${NC}"
+        if grep -q '"editor.fontSize": 16' "${TEST_DIR_4}/.vscode/settings.json"; then
+            echo -e "${GREEN}✓ 後から指定したテンプレートが優先されている（fontSize: 16）${NC}"
             PASSED_TESTS=$((PASSED_TESTS + 1))
         else
             echo -e "${YELLOW}! JSONマージの確認${NC}"
