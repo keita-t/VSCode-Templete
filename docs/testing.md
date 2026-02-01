@@ -18,7 +18,7 @@ test/
 
 **ファイル**: `manual/test-local-templates.sh`
 
-**目的**: ローカルの`test-templete`を使用して高速にテスト（GitHubアクセス不要）
+**目的**: ローカルの`templates/test`を使用して高速にテスト（GitHubアクセス不要）
 
 **テストケース**:
 
@@ -48,10 +48,10 @@ test/
 
 **テストケース**:
 
-1. **デフォルト動作**: `templete/base`からダウンロード
-2. **カスタムディレクトリ（短縮形）**: `-d test-templete simple`
-3. **カスタムディレクトリ（完全形）**: `--template-dir test-templete advanced`
-4. **複数テンプレート**: `test-templete/simple`と`advanced`を順番に適用
+1. **デフォルト動作**: `templates/base`からダウンロード
+2. **カスタムディレクトリ（短縮形）**: `-d templates/test simple`
+3. **カスタムディレクトリ（完全形）**: `--template-dir templates/test advanced`
+4. **複数テンプレート**: `templates/test/simple`と`advanced`を順番に適用
 5. **JSONマージ＆バックアップ**: 既存ファイルとのマージ
 
 **カバー範囲**:
@@ -66,7 +66,7 @@ test/
 ### ローカルテスト（推奨、GitHubアクセス不要）
 
 #### 前提条件
-- `test-templete`ディレクトリがローカルに存在
+- `templates/test`ディレクトリがローカルに存在
 - `jq`（オプション、JSONマージテスト用）
 
 #### 実行
@@ -125,7 +125,7 @@ cd /home/keita/Project/vs_code/VSCode-Templete
 
 ```
 ================================================================================
-テスト 1/5: デフォルト動作（templete/base）
+テスト 1/5: デフォルト動作（templates/base）
 ================================================================================
 ✓ テスト環境作成...
 ✓ スクリプト実行（デフォルト）...
@@ -134,10 +134,10 @@ cd /home/keita/Project/vs_code/VSCode-Templete
 [SUCCESS] テスト 1 完了
 
 ================================================================================
-テスト 2/5: -d test-templete simple
+テスト 2/5: -d templates/test simple
 ================================================================================
 ✓ テスト環境作成...
-✓ スクリプト実行（-d test-templete simple）...
+✓ スクリプト実行（-d templates/test simple）...
 ✓ ファイル配置確認...
 ✓ ファイル内容確認...
 [SUCCESS] テスト 2 完了
@@ -156,15 +156,15 @@ cd /home/keita/Project/vs_code/VSCode-Templete
 
 ### テスト 1: デフォルト動作
 
-デフォルトの`templete/base`からテンプレートをダウンロードし、適切なディレクトリに配置されることを確認します。
+デフォルトの`templates/base`からテンプレートをダウンロードし、適切なディレクトリに配置されることを確認します。
 
 **確認項目**:
 - `.vscode/settings.json`が配置される
-- 配置先が正しい（`templete/base/vscode/settings.json` → `.vscode/settings.json`）
+- 配置先が正しい（`templates/base/vscode/settings.json` → `.vscode/settings.json`）
 
 ### テスト 2 & 3: カスタムテンプレートディレクトリ
 
-`--template-dir`（`-d`）オプションで`test-templete/`ディレクトリからテンプレートを取得し、適切に配置されることを確認します。
+`--template-dir`（`-d`）オプションで`templates/test/`ディレクトリからテンプレートを取得し、適切に配置されることを確認します。
 
 **確認項目**:
 - `-d`（短縮形）と`--template-dir`（完全形）の両方が動作する
@@ -190,13 +190,13 @@ simpleとadvancedを順番に適用し、後から適用したテンプレート
 - 新しい設定値が追加される
 - 上書き時は新しい値が優先される
 
-## test-templeteディレクトリについて
+## templates/testディレクトリについて
 
-`test-templete/`ディレクトリは、`--template-dir`オプションをテストするための専用ディレクトリです。
+`templates/test/`ディレクトリは、`--template-dir`オプションをテストするための専用ディレクトリです。
 
 **構造**:
 ```
-test-templete/
+templates/test/
 ├── simple/
 │   ├── vscode/
 │   │   └── settings.json         # テスト用設定（editor.fontSize: 14）
@@ -209,7 +209,7 @@ test-templete/
         └── settings.json         # テスト用設定（editor.fontSize: 16）
 ```
 
-このディレクトリは本番の`templete/`とは独立しており、テストのためだけに使用されます。
+このディレクトリは本番の`templates/base`、`templates/python`などとは独立しており、テストのためだけに使用されます。
 
 ## 依存関係
 
@@ -285,10 +285,10 @@ jobs:
 
 新しいテストケースを追加する場合：
 
-1. `test/manual/test-template-dir-option.sh`を編集
+1. `test/manual/test-local-templates.sh`または`test/manual/test-github-download.sh`を編集
 2. `run_test`関数を使ってテストケースを追加
-3. 検証項目を`verify_file_exists`、`verify_file_content`関数で確認
-4. 必要に応じて新しい`test-templete/`のテンプレートを作成
+3. 検証項目を`grep`、`[ -f ]`などで確認
+4. 必要に応じて新しい`templates/test/`のテンプレートを作成
 
 例：
 ```bash
