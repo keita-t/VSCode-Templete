@@ -123,7 +123,8 @@ pip install pyyaml tomli-w
 
 **`file_match_patterns`について：**
 - GitHubからテンプレートを取得する際に試行するファイル名のリスト
-- ローカルモード（`-l`オプション使用時）では無視されます
+- ローカルモードでも同様にパターンマッチングが適用されます
+- パターンに一致しないファイルは無視されます（GitHub/ローカル共通）
 - プロジェクトで使用する可能性のあるファイルを追加してください
 - 例：`"Makefile"`, `"CMakeLists.txt"`, `"go.mod"` など
 - **テンプレート固有のパターン追加が可能**：`templates.<name>.file_match_patterns`でパターンを追加

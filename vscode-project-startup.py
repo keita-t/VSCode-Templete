@@ -487,15 +487,15 @@ class TemplateSource:
         base_path = f"{template_dir}/{template_name}/{subfolder}"
 
         if self.is_local:
-            return self._list_local_files(base_path)
+            return self._list_local_files(base_path, template_name)
         else:
             # GitHubの場合、実際にファイルを探索するのは困難なため
             # 既知のパターンを試行する簡易実装
             # より堅牢な実装はGitHub APIを使用する必要がある
             return self._list_github_files_simple(base_path, template_name)
 
-    def _list_local_files(self, base_path: str) -> List[str]:
-        """ローカルファイルをリスト"""
+    def _list_local_files(self, base_path: str, template_name: str) -> List[str]:
+        """ローカルファイルをリスト（パターンマッチング適用）"""
         if not self.local_path:
             return []
 
@@ -503,11 +503,19 @@ class TemplateSource:
         if not full_path.exists():
             return []
 
+        # パターンマッチングを取得
+        file_patterns = self.config.get_template_file_match_patterns(template_name)
+
         files = []
         for item in full_path.rglob('*'):
             if item.is_file():
                 rel_path = item.relative_to(full_path)
-                files.append(str(rel_path))
+                file_name = rel_path.name
+                
+                # パターンに一致するファイルのみ追加
+                if file_name in file_patterns:
+                    files.append(str(rel_path))
+        
         return files
 
     def _list_github_files_simple(self, base_path: str, template_name: str) -> List[str]:
