@@ -135,7 +135,7 @@ def test_json_merge(setup_script: Path, test_dir: Path, template_dir: Path):
     assert merged_settings.get("newSetting") == "from-template"
 
 
-def test_yaml_merge(setup_script: Path, test_dir: Path, template_dir: Path):
+def test_yaml_merge(install_test_packages, setup_script: Path, test_dir: Path, template_dir: Path):
     """テスト7: YAMLマージ機能"""
     try:
         import yaml
@@ -170,7 +170,7 @@ services:
     assert "web" in content
 
 
-def test_toml_merge(setup_script: Path, test_dir: Path, template_dir: Path):
+def test_toml_merge(install_test_packages, setup_script: Path, test_dir: Path, template_dir: Path):
     """テスト8: TOMLマージ機能"""
     try:
         import tomli_w

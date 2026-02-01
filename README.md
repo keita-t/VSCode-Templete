@@ -29,15 +29,17 @@ GitHubからVSCodeプロジェクト設定テンプレートを自動ダウン�
 
 ### 推奨パッケージ（マージ機能用）
 
-```bash
-# 必須（YAML/TOMLマージに必要）
-pip3 install pyyaml tomli tomli-w
+マージ機能を使用する場合、以下のパッケージのインストールが必要です：
 
-# Python 3.11以降の場合、tomliは不要（標準ライブラリのtomlibを使用）
-pip3 install pyyaml tomli-w
+```bash
+# Python 3.10以前の場合
+pip install pyyaml tomli tomli-w
+
+# Python 3.11以降の場合（tomliは標準ライブラリのtomlibを使用）
+pip install pyyaml tomli-w
 ```
 
-パッケージがインストールされていない場合、該当フォーマットのマージは上書きモードにフォールバックします。
+パッケージがインストールされていない場合、該当フォーマットのマージは上書きモードで動作します（警告が表示されます）。
 
 ## ⚙️ 設定のカスタマイズ
 
@@ -151,15 +153,18 @@ templates/
 - **XML** (`.xml`) - 基本的な実装
 
 **必要なパッケージ：**
-```bash
-# 推奨（すべてのマージ機能を有効化）
-pip3 install pyyaml tomli tomli-w
 
-# Python 3.11以降の場合
-pip3 install pyyaml tomli-w  # tomliは標準ライブラリのtomlibを使用
+マージ機能を使用する場合、事前にパッケージをインストールしてください：
+
+```bash
+# Python 3.10以前の場合
+pip install pyyaml tomli tomli-w
+
+# Python 3.11以降の場合（tomliは標準ライブラリ）
+pip install pyyaml tomli-w
 ```
 
-パッケージがインストールされていない場合は、自動的に上書きモードにフォールバックします。
+パッケージがインストールされていない場合、該当フォーマットのマージは上書きモードで動作します（警告が表示されます）。
 
 #### JSONファイルのマージ
 
