@@ -205,6 +205,12 @@ class Config:
         template_config = templates.get(template_name, {})
         return template_config.get("file_mapping", {})
 
+    def get_template_github_file_patterns(self, template_name: str) -> List[str]:
+        """テンプレート固有のGitHubファイルパターンを取得（デフォルトはグローバル設定）"""
+        templates = self._config.get("templates", {})
+        template_config = templates.get(template_name, {})
+        return template_config.get("github_file_patterns", self.github_file_patterns)
+
 
 # ============================================================================
 # 依存パッケージ管理
@@ -478,7 +484,7 @@ class TemplateSource:
             # GitHubの場合、実際にファイルを探索するのは困難なため
             # 既知のパターンを試行する簡易実装
             # より堅牢な実装はGitHub APIを使用する必要がある
-            return self._list_github_files_simple(base_path)
+            return self._list_github_files_simple(base_path, template_name)
 
     def _list_local_files(self, base_path: str) -> List[str]:
         """ローカルファイルをリスト"""
@@ -496,11 +502,11 @@ class TemplateSource:
                 files.append(str(rel_path))
         return files
 
-    def _list_github_files_simple(self, base_path: str) -> List[str]:
-        """GitHubファイルを簡易リスト（設定されたパターンを試行）"""
+    def _list_github_files_simple(self, base_path: str, template_name: str) -> List[str]:
+        """GitHubファイルを簡易リスト（テンプレート固有またはグローバル設定のパターンを試行）"""
         # 注: これは簡易実装。実際のGitHub API実装が必要
-        # config.jsonで設定されたファイルパターンを試行
-        file_patterns = self.config.github_file_patterns
+        # テンプレート固有のパターン、なければグローバル設定を使用
+        file_patterns = self.config.get_template_github_file_patterns(template_name)
 
         found_files = []
         for pattern in file_patterns:

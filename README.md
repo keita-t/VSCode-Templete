@@ -98,7 +98,16 @@ pip install pyyaml tomli-w
       "file_mapping": {
         "requirements.txt": ".",
         "setup.py": "."
-      }
+      },
+      "github_file_patterns": [
+        "pyproject.toml",
+        "requirements.txt",
+        "setup.py",
+        "setup.cfg",
+        "MANIFEST.in",
+        ".pylintrc",
+        "pytest.ini"
+      ]
     }
   }
 }
@@ -119,6 +128,22 @@ pip install pyyaml tomli-w
 - ローカルモード（`-l`オプション使用時）では無視されます
 - プロジェクトで使用する可能性のあるファイルを追加してください
 - 例：`"Makefile"`, `"CMakeLists.txt"`, `"go.mod"` など
+- **テンプレート固有のパターン設定も可能**：`templates.<name>.github_file_patterns`で上書き可能
+
+**テンプレート固有の設定例：**
+```json
+"templates": {
+  "nodejs": {
+    "github_file_patterns": [
+      "package.json",
+      "tsconfig.json",
+      ".npmrc",
+      ".nvmrc",
+      "webpack.config.js"
+    ]
+  }
+}
+```
 
 ## 📝 カスタムテンプレートの作り方
 
