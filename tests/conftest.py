@@ -1,6 +1,7 @@
 """pytest設定とフィクスチャ"""
 import os
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Generator
@@ -25,21 +26,50 @@ def template_dir(project_root: Path) -> Path:
     return project_root / "templates"
 
 
+@pytest.fixture(scope="session")
+def shared_venv(tmp_path_factory) -> Path:
+    """セッション全体で共有する.venv環境を作成"""
+    venv_dir = tmp_path_factory.mktemp("shared-venv")
+
+    # .venvを作成
+    subprocess.run(
+        ["python3", "-m", "venv", str(venv_dir)],
+        check=True,
+        capture_output=True
+    )
+
+    # 必要なパッケージをインストール
+    pip = venv_dir / "bin" / "pip"
+    subprocess.run(
+        [str(pip), "install", "-q", "pyyaml", "tomli", "tomli-w"],
+        check=True,
+        capture_output=True
+    )
+
+    return venv_dir
+
+
 @pytest.fixture
-def test_dir() -> Generator[Path, None, None]:
+def test_dir(shared_venv: Path) -> Generator[Path, None, None]:
     """一時テストディレクトリを作成"""
     tmpdir = Path(tempfile.mkdtemp(prefix="pytest-template-"))
+
+    # 共有venvへのシンボリックリンクを作成
+    venv_link = tmpdir / ".venv"
+    venv_link.symlink_to(shared_venv, target_is_directory=True)
+
     yield tmpdir
+
     # クリーンアップ
     if tmpdir.exists():
         shutil.rmtree(tmpdir)
 
 
 @pytest.fixture(autouse=True)
-def auto_install_deps():
-    """自動パッケージインストールを有効化"""
+def skip_auto_install():
+    """パッケージの自動インストールをスキップ（共有venvを使用）"""
     old_value = os.environ.get('AUTO_INSTALL_DEPS')
-    os.environ['AUTO_INSTALL_DEPS'] = 'yes'
+    os.environ['AUTO_INSTALL_DEPS'] = 'skip'
     yield
     if old_value is None:
         os.environ.pop('AUTO_INSTALL_DEPS', None)

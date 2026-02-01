@@ -195,6 +195,9 @@ def get_venv_python(venv_path: Path) -> Path:
 
 def get_venv_site_packages(venv_path: Path) -> Optional[Path]:
     """仮想環境のsite-packagesパスを取得"""
+    # シンボリックリンクを解決
+    venv_path = venv_path.resolve()
+
     python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
 
     if sys.platform == "win32":
@@ -209,7 +212,8 @@ def setup_venv(project_dir: Path) -> bool:
     """仮想環境をセットアップ"""
     venv_path = get_venv_path(project_dir)
 
-    if venv_path.exists():
+    # シンボリックリンクも含めて存在確認
+    if venv_path.exists() or venv_path.is_symlink():
         return True
 
     print(f"{Colors.BLUE}仮想環境を作成中: {venv_path}{Colors.NC}")
@@ -261,6 +265,29 @@ def add_venv_to_path(project_dir: Path) -> None:
 def check_and_install_dependencies(merge_patterns: List[str], project_dir: Path) -> None:
     """merge_patternsに基づいて必要なパッケージをチェック・インストール"""
     global HAS_YAML, HAS_TOML
+
+    # 既存の.venvがあればsys.pathに追加（スキップモードでも有効）
+    venv_path = get_venv_path(project_dir)
+    if venv_path.exists() or venv_path.is_symlink():
+        add_venv_to_path(project_dir)
+
+        # パッケージの再チェック
+        try:
+            import yaml
+            HAS_YAML = True
+        except ImportError:
+            pass
+
+        try:
+            import tomli_w
+            HAS_TOML = True
+        except ImportError:
+            try:
+                import tomllib
+                import tomli_w
+                HAS_TOML = True
+            except ImportError:
+                pass
 
     # パターンから必要なパッケージを判定
     required_packages = []
