@@ -1,19 +1,20 @@
 {
   // ============================================================================
-  // Python開発環境用 VSCode設定
+  // VSCode 汎用設定テンプレート
   // ============================================================================
-  // Base設定 + Python特有の設定
+  // プロジェクト共通の基本設定
+  // 言語固有の設定は各テンプレートで追加・上書きしてください
   // ============================================================================
 
   // --------------------------------------------------------------------------
-  // エディタ基本設定（Base設定）
+  // エディタ基本設定
   // --------------------------------------------------------------------------
   "editor.fontSize": 14,
-  "editor.tabSize": 4,  // Python推奨: 4スペース
+  "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.detectIndentation": true,
   "editor.wordWrap": "on",
-  "editor.rulers": [79, 120],  // PEP 8推奨: 79文字
+  "editor.rulers": [80, 120],
   "editor.minimap.enabled": true,
   "editor.minimap.maxColumn": 120,
   "editor.lineNumbers": "on",
@@ -24,7 +25,7 @@
   "editor.mouseWheelZoom": true,
 
   // --------------------------------------------------------------------------
-  // フォーマット（Base設定 + Python設定）
+  // フォーマット
   // --------------------------------------------------------------------------
   "editor.formatOnSave": true,
   "editor.formatOnPaste": false,
@@ -35,17 +36,8 @@
     "source.organizeImports": "explicit"
   },
 
-  // Python専用フォーマッター
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
-    }
-  },
-
   // --------------------------------------------------------------------------
-  // ファイル管理（Base設定）
+  // ファイル管理
   // --------------------------------------------------------------------------
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
@@ -55,7 +47,7 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   
-  // 除外設定（Base + Python）
+  // 除外設定
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -74,14 +66,10 @@
     "**/.next": true,
     "**/dist": true,
     "**/build": true,
-    "**/.cache": true,
-    "**/.mypy_cache": true,
-    "**/.tox": true,
-    "**/.nox": true,
-    "**/*.egg-info": true
+    "**/.cache": true
   },
 
-  // 検索除外（Base + Python）
+  // 検索除外
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
@@ -92,24 +80,11 @@
     "**/venv": true,
     "**/__pycache__": true,
     "**/.git": true,
-    "**/coverage": true,
-    "**/.mypy_cache": true,
-    "**/.pytest_cache": true,
-    "**/*.egg-info": true
-  },
-
-  // ファイルウォッチ除外（Python最適化）
-  "files.watcherExclude": {
-    "**/node_modules/*": true,
-    "**/build/*": true,
-    "**/.venv/*": true,
-    "**/venv/*": true,
-    "**/__pycache__/*": true,
-    "**/.pytest_cache/*": true
+    "**/coverage": true
   },
 
   // --------------------------------------------------------------------------
-  // ワークベンチ（Base設定）
+  // ワークベンチ
   // --------------------------------------------------------------------------
   "workbench.startupEditor": "welcomePage",
   "workbench.colorTheme": "Default Dark+",
@@ -117,10 +92,9 @@
   "workbench.editor.enablePreview": false,
   "workbench.editor.limit.enabled": true,
   "workbench.editor.limit.value": 10,
-  "workbench.editor.limit.perEditorGroup": true,
   
   // --------------------------------------------------------------------------
-  // ターミナル（Base設定）
+  // ターミナル
   // --------------------------------------------------------------------------
   "terminal.integrated.fontSize": 13,
   "terminal.integrated.cursorBlinking": true,
@@ -128,7 +102,7 @@
   "terminal.integrated.scrollback": 10000,
 
   // --------------------------------------------------------------------------
-  // Git統合（Base設定）
+  // Git統合
   // --------------------------------------------------------------------------
   "git.enabled": true,
   "git.autofetch": true,
@@ -138,7 +112,7 @@
   "git.openRepositoryInParentFolders": "always",
 
   // --------------------------------------------------------------------------
-  // その他（Base設定）
+  // その他
   // --------------------------------------------------------------------------
   "explorer.confirmDelete": true,
   "explorer.confirmDragAndDrop": true,
@@ -146,48 +120,5 @@
   "telemetry.telemetryLevel": "off",
   "update.mode": "default",
   "extensions.autoUpdate": true,
-  "security.workspace.trust.enabled": true,
-
-  // ============================================================================
-  // Python特有の設定
-  // ============================================================================
-
-  // --------------------------------------------------------------------------
-  // Pythonインタープリター
-  // --------------------------------------------------------------------------
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-  "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
-  "python.terminal.activateEnvironment": true,
-  "python.terminal.executeInFileDir": false,
-
-  // --------------------------------------------------------------------------
-  // Python環境変数
-  // --------------------------------------------------------------------------
-  "python.envFile": "${workspaceFolder}/.env",
-  "terminal.integrated.env.linux": {
-    "PYTHONPATH": "${workspaceFolder}"
-  },
-
-  // --------------------------------------------------------------------------
-  // Pythonテスト設定
-  // --------------------------------------------------------------------------
-  "python.testing.cwd": "${workspaceFolder}",
-  "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": [
-    "-v",
-    "--tb=short"
-  ],
-
-  // --------------------------------------------------------------------------
-  // Pylance分析設定（メモリ最適化）
-  // --------------------------------------------------------------------------
-  "python.analysis.indexing": false,
-  "python.analysis.userFileIndexingLimit": 500,
-  "python.analysis.diagnosticMode": "openFilesOnly",
-  "python.analysis.autoImportCompletions": false,
-  "python.analysis.persistAllIndices": false,
-  "python.analysis.cacheLSPData": false,
-  "python.analysis.nodeArguments": ["--max-old-space-size=1024"],
-  "python.analysis.typeCheckingMode": "basic"
+  "security.workspace.trust.enabled": true
 }

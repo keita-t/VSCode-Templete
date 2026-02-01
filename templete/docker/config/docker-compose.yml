@@ -1,0 +1,79 @@
+# ============================================================================
+# Docker Compose サンプル設定
+# ============================================================================
+# プロジェクトに合わせてカスタマイズしてください
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # アプリケーションサービス（例）
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/node_modules  # node_modulesを除外（Node.jsの場合）
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+    env_file:
+      - .env
+    networks:
+      - app-network
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # データベースサービス（例: PostgreSQL）
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: my-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=myapp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # キャッシュサービス（例: Redis）
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: my-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+# ----------------------------------------------------------------------------
+# ネットワーク定義
+# ----------------------------------------------------------------------------
+networks:
+  app-network:
+    driver: bridge
+
+# ----------------------------------------------------------------------------
+# ボリューム定義
+# ----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:

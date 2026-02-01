@@ -1,0 +1,85 @@
+{
+  // ============================================================================
+  // Docker開発環境用 VSCode設定
+  // ============================================================================
+  // Docker拡張機能と開発コンテナの設定
+  // ============================================================================
+
+  // --------------------------------------------------------------------------
+  // Docker拡張機能設定
+  // --------------------------------------------------------------------------
+  
+  // Docker イメージ・コンテナ表示設定
+  "docker.showStartPage": false,
+  "docker.truncateLongRegistryPaths": false,
+  "docker.truncateMaxLength": 10,
+  
+  // Docker Compose
+  "docker.composeCommand": "docker compose",
+  
+  // イメージビルド設定
+  "docker.images.label": "CreatedTime",
+  "docker.images.sortBy": "CreatedTime",
+  "docker.images.groupBy": "None",
+  
+  // コンテナ設定
+  "docker.containers.label": "ContainerName",
+  "docker.containers.sortBy": "CreatedTime",
+  "docker.containers.groupBy": "None",
+  
+  // --------------------------------------------------------------------------
+  // Remote - Containers設定
+  // --------------------------------------------------------------------------
+  
+  // コンテナ内での作業設定
+  "remote.containers.defaultExtensions": [
+    "ms-azuretools.vscode-docker"
+  ],
+  
+  // --------------------------------------------------------------------------
+  // ターミナル統合
+  // --------------------------------------------------------------------------
+  
+  // Dockerコンテナ用シェル統合
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "icon": "terminal-bash"
+    },
+    "docker": {
+      "path": "docker",
+      "args": ["exec", "-it"],
+      "icon": "terminal-bash"
+    }
+  },
+  
+  // --------------------------------------------------------------------------
+  // ファイル管理
+  // --------------------------------------------------------------------------
+  
+  // Docker関連ファイルの除外設定
+  "files.exclude": {
+    "**/.dockerignore": false,
+    "**/Dockerfile": false,
+    "**/docker-compose*.yml": false
+  },
+  
+  // Docker関連ファイルの関連付け
+  "files.associations": {
+    "Dockerfile*": "dockerfile",
+    "docker-compose*.yml": "dockercompose",
+    "docker-compose*.yaml": "dockercompose",
+    ".dockerignore": "ignore"
+  },
+  
+  // --------------------------------------------------------------------------
+  // その他の設定
+  // --------------------------------------------------------------------------
+  
+  // Docker設定ファイルの検証
+  "docker.languageserver.diagnostics.deprecatedMaintainer": "warning",
+  "docker.languageserver.diagnostics.directiveCasing": "warning",
+  "docker.languageserver.diagnostics.emptyContinuationLine": "warning",
+  "docker.languageserver.diagnostics.instructionCasing": "warning",
+  "docker.languageserver.diagnostics.instructionJSONInSingleQuotes": "warning"
+}
