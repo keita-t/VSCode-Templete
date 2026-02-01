@@ -5,11 +5,8 @@
   // テストを実行するタスクを定義します
   //
   // 【pytest】
-  //   - Run Tests (pytest): pytest実行（推奨、高速）
-  //
-  // 【レガシー Bashテスト】
-  //   - Run Local Tests: ローカルテスト（Bash版）
-  //   - Run GitHub Tests: GitHubダウンロード統合テスト（Bash版、トークン必要）
+  //   - Run Tests (pytest): pytest実行（デフォルト、高速）
+  //   - Run Tests (Coverage): カバレッジ測定付き実行
   // ============================================================================
   "version": "2.0.0",
   "tasks": [
@@ -32,24 +29,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Run Local Tests",
+      "label": "Run Tests (Coverage)",
       "type": "shell",
-      "command": "./test/manual/test-local-templates.sh",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run GitHub Tests",
-      "type": "shell",
-      "command": "./test/manual/test-github-download.sh",
+      "command": ".venv/bin/pytest tests/ --cov=. --cov-report=term-missing",
       "group": "test",
       "presentation": {
         "echo": true,

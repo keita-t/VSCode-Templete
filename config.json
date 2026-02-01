@@ -7,75 +7,55 @@
   "folder_mapping": {
     "vscode": ".vscode",
     "snippets": ".vscode",
-    "git": ".",
     "config": ".",
     "docker": "."
   },
-  "file_mapping": {
-    ".gitignore": ".",
-    ".dockerignore": ".",
-    ".editorconfig": "."
+  "merge_patterns": {
+    "json": [
+      "*.json",
+      "*.code-snippets"
+    ],
+    "yaml": [
+      "*.yaml",
+      "*.yml"
+    ],
+    "toml": [
+      "*.toml"
+    ],
+    "xml": [
+      "*.xml"
+    ],
+    "line_based": [
+      ".gitignore",
+      ".dockerignore",
+      ".editorconfig"
+    ]
   },
-  "merge_patterns": [
-    "*.json",
-    "*.code-snippets",
-    "*.yaml",
-    "*.yml",
-    "*.toml",
-    "*.xml"
-  ],
   "file_match_patterns": [
     "settings.json",
     "extensions.json",
     "launch.json",
     "tasks.json",
     ".gitignore",
-    ".dockerignore",
-    ".editorconfig",
-    "pyproject.toml",
-    "requirements.txt",
-    "package.json",
-    "tsconfig.json"
+    ".editorconfig"
   ],
   "templates": {
-    "docker": {
+    "default/base": {},
+    "default/lightweight": {},
+    "docker/base": {
       "file_match_patterns": [
         "Dockerfile",
         "docker-compose.yml",
         ".dockerignore"
       ]
     },
-    "merge-yaml": {
+    "python/base": {
       "file_match_patterns": [
-        "docker-compose.yml"
+        "python.code-snippets",
+        "pyproject.toml",
+        "requirements.txt"
       ]
     },
-    "merge-toml": {
-      "file_match_patterns": [
-        "pyproject.toml"
-      ]
-    },
-    "merge-json": {
-      "file_match_patterns": [
-        "settings.json"
-      ]
-    },
-    "python": {
-      "folder_mapping": {
-        "docs": "docs",
-        "tests": "tests"
-      },
-      "file_mapping": {
-        "requirements.txt": ".",
-        "setup.py": "."
-      },
-      "file_match_patterns": [
-        "setup.py",
-        "setup.cfg",
-        "MANIFEST.in",
-        ".pylintrc",
-        "pytest.ini"
-      ]
-    }
+    "python/pylance-lw": {}
   }
 }

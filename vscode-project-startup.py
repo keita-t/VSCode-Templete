@@ -67,7 +67,15 @@ class Config:
         Args:
             config_path: 設定ファイルのパス（指定しない場合はデフォルトを使用）
         """
-        self.config_path = config_path or Path(__file__).parent / "config.json"
+        # 環境変数でconfig.jsonのパスを指定可能（テスト用）
+        if config_path is None:
+            env_config = os.environ.get("VSCODE_TEMPLATE_CONFIG")
+            if env_config:
+                config_path = Path(env_config)
+            else:
+                config_path = Path(__file__).parent / "config.json"
+
+        self.config_path = config_path
         self._config = self._load_config()
 
     def _load_config(self) -> dict:
@@ -91,65 +99,38 @@ class Config:
 
     def _create_default_config(self) -> None:
         """デフォルトの設定ファイルを作成"""
-        default_config = {
-            "github": {
-                "user": "keita-t",
-                "repo": "VSCode-Templete",
-                "branch": "main"
-            },
-            "folder_mapping": {
-                "vscode": ".vscode",
-                "snippets": ".vscode",
-                "git": ".",
-                "config": ".",
-                "docker": "."
-            },
-            "file_mapping": {
-                ".gitignore": ".",
-                ".dockerignore": ".",
-                ".editorconfig": "."
-            },
-            "merge_patterns": [
-                "*.json",
-                "*.code-snippets",
-                "*.yaml",
-                "*.yml",
-                "*.toml",
-                "*.xml"
-            ],
-            "file_match_patterns": [
-                "settings.json",
-                "extensions.json",
-                "launch.json",
-                "tasks.json",
-                ".gitignore",
-                ".dockerignore",
-                ".editorconfig",
-                "pyproject.toml",
-                "requirements.txt",
-                "package.json",
-                "tsconfig.json"
-            ],
-            "templates": {
-                "python": {
-                    "folder_mapping": {
-                        "docs": "docs",
-                        "tests": "tests"
-                    },
-                    "file_mapping": {
-                        "requirements.txt": ".",
-                        "setup.py": "."
-                    }
-                }
-            }
-        }
+        default_config_path = Path(__file__).parent / "config.json.default"
 
+        # 1. ローカルのconfig.json.defaultを探す
+        if default_config_path.exists():
+            try:
+                with default_config_path.open('r', encoding='utf-8') as f:
+                    default_config = json.load(f)
+                with self.config_path.open('w', encoding='utf-8') as f:
+                    json.dump(default_config, f, indent=2, ensure_ascii=False)
+                    f.write('\n')
+                return
+            except Exception as e:
+                print_error(f"ローカルのconfig.json.default読み込みエラー: {e}")
+
+        # 2. GitHub上のconfig.json.defaultを取得
         try:
+            user = "keita-t"
+            repo = "VSCode-Templete"
+            branch = "main"
+            url = f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/config.json.default"
+
+            req = request.Request(url)
+            with request.urlopen(req, timeout=10) as response:
+                content = response.read()
+                default_config = json.loads(content.decode('utf-8'))
+
             with self.config_path.open('w', encoding='utf-8') as f:
                 json.dump(default_config, f, indent=2, ensure_ascii=False)
                 f.write('\n')
         except Exception as e:
-            print_error(f"設定ファイルの作成に失敗しました: {e}")
+            print_error(f"GitHub上のconfig.json.defaultの取得に失敗しました: {e}")
+            print_error("デフォルト設定の作成に失敗しました")
             sys.exit(1)
 
     @property
@@ -169,41 +150,27 @@ class Config:
         return self._config["folder_mapping"]
 
     @property
-    def file_mapping(self) -> Dict[str, str]:
-        return self._config["file_mapping"]
-
-    @property
-    def merge_patterns(self) -> List[str]:
+    def merge_patterns(self) -> Dict[str, List[str]]:
+        """マージパターン（フォーマット別）"""
         return self._config["merge_patterns"]
+
+    def get_all_merge_patterns(self) -> List[str]:
+        """全マージパターンをフラットなリストで取得"""
+        patterns = []
+        for format_patterns in self.merge_patterns.values():
+            patterns.extend(format_patterns)
+        return patterns
 
     @property
     def file_match_patterns(self) -> List[str]:
         """GitHubファイル探索で試行するファイルパターン"""
-        return self._config.get("file_match_patterns", [
-            "settings.json",
-            "extensions.json",
-            "launch.json",
-            "tasks.json",
-            ".gitignore",
-            ".dockerignore",
-            ".editorconfig",
-            "pyproject.toml",
-            "requirements.txt",
-            "package.json",
-            "tsconfig.json"
-        ])
+        return self._config.get("file_match_patterns", [])
 
     def get_template_folder_mapping(self, template_name: str) -> Dict[str, str]:
         """テンプレート固有のフォルダマッピングを取得"""
         templates = self._config.get("templates", {})
         template_config = templates.get(template_name, {})
         return template_config.get("folder_mapping", {})
-
-    def get_template_file_mapping(self, template_name: str) -> Dict[str, str]:
-        """テンプレート固有のファイルマッピングを取得"""
-        templates = self._config.get("templates", {})
-        template_config = templates.get(template_name, {})
-        return template_config.get("file_mapping", {})
 
     def get_template_file_match_patterns(self, template_name: str) -> List[str]:
         """テンプレート固有のファイルマッチパターンを取得（グローバル設定 + テンプレート固有）"""
@@ -224,7 +191,7 @@ class Config:
 # 依存パッケージ管理
 # ============================================================================
 
-def check_dependencies(merge_patterns: List[str]) -> None:
+def check_dependencies(merge_patterns: Dict[str, List[str]]) -> None:
     """merge_patternsに基づいて必要なパッケージをチェックして警告表示"""
     global HAS_YAML, HAS_TOML
 
@@ -232,18 +199,16 @@ def check_dependencies(merge_patterns: List[str]) -> None:
     required_packages = []
 
     # YAML関連
-    if any(pattern in ["*.yaml", "*.yml"] for pattern in merge_patterns):
-        if not HAS_YAML:
-            required_packages.append("pyyaml")
+    if "yaml" in merge_patterns and not HAS_YAML:
+        required_packages.append("pyyaml")
 
     # TOML関連
-    if any(pattern == "*.toml" for pattern in merge_patterns):
-        if not HAS_TOML:
-            # Python 3.11以降はtomlibが標準ライブラリ
-            if sys.version_info < (3, 11):
-                required_packages.extend(["tomli", "tomli-w"])
-            else:
-                required_packages.append("tomli-w")
+    if "toml" in merge_patterns and not HAS_TOML:
+        # Python 3.11以降はtomlibが標準ライブラリ
+        if sys.version_info < (3, 11):
+            required_packages.extend(["tomli", "tomli-w"])
+        else:
+            required_packages.append("tomli-w")
 
     # パッケージが不足している場合は警告を表示
     if required_packages:
@@ -295,10 +260,14 @@ def load_github_token() -> Optional[str]:
     return None
 
 
-def should_merge_file(filename: str, merge_patterns: List[str]) -> bool:
+def should_merge_file(filename: str, merge_patterns: Dict[str, List[str]]) -> bool:
     """ファイルがマージ対象かどうかを判定"""
     from fnmatch import fnmatch
-    return any(fnmatch(filename, pattern) for pattern in merge_patterns)
+    # 全フォーマットのパターンをチェック
+    for format_patterns in merge_patterns.values():
+        if any(fnmatch(filename, pattern) for pattern in format_patterns):
+            return True
+    return False
 
 
 # ============================================================================
@@ -422,20 +391,70 @@ def merge_xml_files(existing_file: Path, new_file: Path, output_file: Path) -> b
         return False
 
 
-def merge_structured_file(existing_file: Path, new_file: Path, output_file: Path) -> bool:
-    """構造化ファイルを拡張子に応じてマージ"""
-    ext = existing_file.suffix.lower()
+def merge_line_based_files(existing_file: Path, new_file: Path, output_file: Path) -> bool:
+    """行単位のテキストファイルをマージ（重複排除）"""
+    try:
+        # 既存ファイルを読み込み
+        with existing_file.open('r', encoding='utf-8') as f:
+            existing_lines = f.readlines()
 
-    if ext == '.json' or ext == '.code-snippets':
+        # 新規ファイルを読み込み
+        with new_file.open('r', encoding='utf-8') as f:
+            new_lines = f.readlines()
+
+        # 既存の行をセットに保存（重複チェック用、改行を除いて比較）
+        existing_set = {line.rstrip('\n\r') for line in existing_lines}
+
+        # マージ結果（既存 + 重複しない新規）
+        merged_lines = list(existing_lines)
+
+        # 新規行を追加（既存にない行のみ）
+        for line in new_lines:
+            line_stripped = line.rstrip('\n\r')
+            if line_stripped not in existing_set:
+                merged_lines.append(line)
+                existing_set.add(line_stripped)
+
+        # 出力ファイルに書き込み
+        with output_file.open('w', encoding='utf-8') as f:
+            f.writelines(merged_lines)
+
+        return True
+    except Exception as e:
+        print_error(f"行ベース マージエラー: {e}")
+        return False
+
+
+def get_file_format(filename: str, merge_patterns: Dict[str, List[str]]) -> Optional[str]:
+    """ファイル名からフォーマットを判定"""
+    from fnmatch import fnmatch
+    for format_name, patterns in merge_patterns.items():
+        if any(fnmatch(filename, pattern) for pattern in patterns):
+            return format_name
+    return None
+
+
+def merge_structured_file(existing_file: Path, new_file: Path, output_file: Path, merge_patterns: Dict[str, List[str]]) -> bool:
+    """構造化ファイルをフォーマットに応じてマージ"""
+    file_format = get_file_format(existing_file.name, merge_patterns)
+
+    if file_format is None:
+        print_error(f"未対応のファイル: {existing_file.name}")
+        return False
+
+    # フォーマットに応じたマージ関数を呼び出し
+    if file_format == 'json':
         return merge_json_files(existing_file, new_file, output_file)
-    elif ext in ['.yaml', '.yml']:
+    elif file_format == 'yaml':
         return merge_yaml_files(existing_file, new_file, output_file)
-    elif ext == '.toml':
+    elif file_format == 'toml':
         return merge_toml_files(existing_file, new_file, output_file)
-    elif ext == '.xml':
+    elif file_format == 'xml':
         return merge_xml_files(existing_file, new_file, output_file)
+    elif file_format == 'line_based':
+        return merge_line_based_files(existing_file, new_file, output_file)
     else:
-        print_error(f"未対応の拡張子: {ext}")
+        print_error(f"未対応のフォーマット: {file_format}")
         return False
 
 
@@ -544,7 +563,7 @@ class TemplateSetup:
                  config: Optional[Config] = None,
                  template_dir: str = "templates",
                  local_path: Optional[Path] = None,
-                 merge_patterns: Optional[List[str]] = None):
+                 merge_patterns: Optional[Dict[str, List[str]]] = None):
         self.template_types = template_types
         self.template_dir = template_dir
         self.config = config or Config()
@@ -583,9 +602,6 @@ class TemplateSetup:
             folder_mapping = self.config.folder_mapping.copy()
             folder_mapping.update(self.config.get_template_folder_mapping(template_name))
 
-            file_mapping = self.config.file_mapping.copy()
-            file_mapping.update(self.config.get_template_file_mapping(template_name))
-
             # フォルダベースのファイル
             for subfolder, dest_dir in folder_mapping.items():
                 files = self.source.list_template_files(
@@ -595,15 +611,6 @@ class TemplateSetup:
                 for file in files:
                     template_path = f"{self.template_dir}/{template_name}/{subfolder}/{file}"
                     dest_path = self.project_dir / dest_dir / file
-                    self.files_to_process.append((template_path, dest_path, template_name))
-
-            # 個別ファイルマッピング
-            for filename, dest_dir in file_mapping.items():
-                template_path = f"{self.template_dir}/{template_name}/{filename}"
-                dest_path = self.project_dir / dest_dir / filename
-
-                # ファイルが存在するか確認
-                if self.source.get_file_content(template_path):
                     self.files_to_process.append((template_path, dest_path, template_name))
 
         return len(self.files_to_process) > 0
@@ -635,7 +642,7 @@ class TemplateSetup:
                 if dest_path.exists() and should_merge_file(dest_path.name, self.merge_patterns):
                     # マージ
                     merged_file = temp_path / f"{dest_path.name}.merged"
-                    if merge_structured_file(dest_path, temp_file, merged_file):
+                    if merge_structured_file(dest_path, temp_file, merged_file, self.merge_patterns):
                         shutil.copy2(merged_file, dest_path)
                         print(f"  [マージ] {dest_path.relative_to(self.project_dir)}")
                         merge_count += 1

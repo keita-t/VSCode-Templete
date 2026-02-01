@@ -3,22 +3,21 @@
 GitHubからVSCodeプロジェクト設定テンプレートを自動ダウンロードして配置するツールです。
 設定ファイルのマージによる柔軟な差分設定をサポートしています。
 
-**🎉 Python版に移行しました！** より安定した処理とクリーンなコードで、構造化ファイルのマージが確実に動作します。
-
 ## 🚀 クイックスタート
 
 ```bash
-# 付属のテンプレートを使用
+# 付属のテンプレートを使用（階層構造対応）
 ./vscode-project-startup.py default/base
+./vscode-project-startup.py python/pylance-lw
 
 # 独自テンプレートを作成して使用（推奨）
 ./vscode-project-startup.py my-template
 
 # テンプレートを組み合わせる（後が優先）
-./vscode-project-startup.py default/base my-template
+./vscode-project-startup.py default/base python
 
 # ローカルテンプレートを使用（開発時）
-./vscode-project-startup.py -l ./templates -d test simple
+./vscode-project-startup.py -l ./templates default/lightweight
 ```
 
 ## 🔧 インストール
@@ -58,7 +57,6 @@ pip install pyyaml tomli-w
   "folder_mapping": {
     "vscode": ".vscode",
     "snippets": ".vscode",
-    "git": ".",
     "config": ".",
     "docker": "."
   },
@@ -67,51 +65,53 @@ pip install pyyaml tomli-w
     ".dockerignore": ".",
     ".editorconfig": "."
   },
-  "merge_patterns": [
-    "*.json",
-    "*.yaml",
-    "*.yml",
-    "*.toml",
-    "*.xml"
-  ],
+  "merge_patterns": {
+    "json": [
+      "*.json",
+      "*.code-snippets"
+    ],
+    "yaml": [
+      "*.yaml",
+      "*.yml"
+    ],
+    "toml": [
+      "*.toml"
+    ],
+    "xml": [
+      "*.xml"
+    ],
+    "line_based": [
+      ".gitignore",
+      ".dockerignore",
+      ".editorconfig"
+    ]
+  },
   "file_match_patterns": [
     "settings.json",
     "extensions.json",
     "launch.json",
     "tasks.json",
     ".gitignore",
-    ".dockerignore",
-    ".editorconfig",
-    "pyproject.toml",
-    "requirements.txt",
-    "package.json",
-    "tsconfig.json"
+    ".editorconfig"
   ],
   "templates": {
-    "docker": {
+    "default/base": {},
+    "default/lightweight": {},
+    "docker/base": {
       "file_match_patterns": [
         "Dockerfile",
         "docker-compose.yml",
         ".dockerignore"
       ]
     },
-    "python": {
-      "folder_mapping": {
-        "docs": "docs",
-        "tests": "tests"
-      },
-      "file_mapping": {
-        "requirements.txt": ".",
-        "setup.py": "."
-      },
+    "python/base": {
       "file_match_patterns": [
-        "setup.py",
-        "setup.cfg",
-        "MANIFEST.in",
-        ".pylintrc",
-        "pytest.ini"
+        "python.code-snippets",
+        "pyproject.toml",
+        "requirements.txt"
       ]
-    }
+    },
+    "python/pylance-lw": {}
   }
 }
 ```
@@ -123,6 +123,17 @@ pip install pyyaml tomli-w
 - `merge_patterns`: マージ対象ファイルパターンを追加（ワイルドカード対応）
 - `file_match_patterns`: GitHubからテンプレートを取得する際に探索するファイル名リスト
 - `templates.<name>`: テンプレート固有の設定を追加
+
+### 設定ファイルのカスタマイズ
+
+**環境変数での設定ファイル指定：**
+```bash
+# カスタムconfig.jsonを使用
+export VSCODE_TEMPLATE_CONFIG=/path/to/custom-config.json
+./vscode-project-startup.py default/base
+```
+
+これはテスト時にも使用され、テスト専用の設定を分離できます。
 
 ### 設定項目の詳細
 
@@ -138,6 +149,23 @@ pip install pyyaml tomli-w
 - グローバル設定とテンプレート固有の設定は**両方とも**使用されます
 - テンプレート固有のパターンがグローバル設定に追加されます（重複は自動除去）
 - 例：グローバルに`settings.json`、Pythonテンプレートに`pytest.ini`を追加した場合、両方探索されます
+
+**階層的テンプレートのサポート：**
+- テンプレート名にスラッシュを含めることで、カテゴリフォルダを指定できます
+- 例：`default/base`, `python/pylance-lw`
+- フォルダ構造：`templates/default/base/vscode/settings.json`
+- config.jsonでもスラッシュ付き名前で設定可能：
+
+```json
+"templates": {
+  "default/base": {
+    "file_match_patterns": ["settings.json", ".gitignore"]
+  },
+  "python/pylance-lw": {
+    "file_match_patterns": ["settings.json"]
+  }
+}
+```
 
 **テンプレート固有の設定例：**
 ```json
@@ -168,9 +196,8 @@ templates/
     │   └── launch.json
     ├── snippets/             # .vscode/ に配置されるスニペット
     │   └── custom.code-snippets
-    ├── git/                  # プロジェクトルートに配置
-    │   └── .gitignore
     └── config/               # プロジェクトルートに配置
+        ├── .gitignore
         └── .editorconfig
 ```
 
@@ -180,7 +207,6 @@ templates/
 |---------------|---------------------|
 | `vscode/`     | `.vscode/`          |
 | `snippets/`   | `.vscode/`          |
-| `git/`        | `.`（ルート）       |
 | `config/`     | `.`（ルート）       |
 | `docker/`     | `.`（ルート）       |
 
@@ -209,6 +235,7 @@ templates/
 - **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用
 - **TOML** (`.toml`) - Python `tomli`/`tomli_w`を使用
 - **XML** (`.xml`) - 基本的な実装
+- **行ベース** (`.gitignore`, `.dockerignore`, `.editorconfig`) - 重複排除でマージ
 
 **必要なパッケージ：**
 
@@ -223,6 +250,26 @@ pip install pyyaml tomli-w
 ```
 
 パッケージがインストールされていない場合、該当フォーマットのマージは上書きモードで動作します（警告が表示されます）。
+
+**行ベースファイルのマージ:**
+
+`.gitignore`、`.dockerignore`、`.editorconfig`などの行ベース設定ファイルは、既存の行を保持しつつ、テンプレートからの新しい行を追加します。重複する行は自動的に排除されます。
+
+例：
+```bash
+# 既存の .gitignore
+__pycache__/
+*.pyc
+
+# テンプレートの .gitignore
+*.pyc          # 重複 → 追加されない
+dist/          # 新規 → 追加される
+
+# マージ後
+__pycache__/
+*.pyc
+dist/
+```
 
 #### JSONファイルのマージ
 
@@ -351,13 +398,11 @@ declare -A MY_TEMPLATE_FOLDER_MAPPING=(
 
 ## 🧪 テスト
 
-### pytest (推奨)
-
 ```bash
 # 開発環境のセットアップ
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install pyyaml tomli tomli-w pytest
 
 # テスト実行
 pytest tests/ -v
@@ -366,15 +411,10 @@ pytest tests/ -v
 # Ctrl+Shift+P → "Run Test Task" → "Run Tests (pytest)"
 ```
 
-### レガシーBashテスト
-
-```bash
-# ローカルテンプレートテスト
-./test/manual/test-local-templates.sh
-
-# GitHubダウンロードテスト（トークン必要）
-./test/manual/test-github-download.sh
-```
+**テスト構成:**
+- 21テスト、6クラスで体系化
+- 基本機能、階層テンプレート、マージ機能、複数テンプレート、エラーハンドリング、前提条件をカバー
+- JSON/YAML/TOML/行ベースの包括的マージテスト
 
 ## 🔑 GitHub Personal Access Token（オプション）
 
