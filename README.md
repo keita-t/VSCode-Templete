@@ -216,7 +216,16 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 汎用的な基本設定
 
 - `.gitignore`: OS、エディタ、一般的な除外設定
-- `settings.json`: VSCodeの基本設定
+- `settings.json`: VSCodeの基本設定（視覚効果は含まない）
+
+### lightweight
+
+メモリ最適化設定
+
+- 低スペックマシンや大規模プロジェクト向け
+- 視覚効果の無効化、エディタタブ制限、ファイル監視の最適化
+- Gitの自動機能を無効化してパフォーマンス向上
+- 使用例: `./vscode-project-startup.sh base lightweight`
 
 ### python
 
@@ -224,6 +233,13 @@ Python開発環境の設定
 
 - VSCode設定（Python固有）
 - ドキュメント・テストフォルダ構造
+
+### docker
+
+Docker開発環境の設定
+
+- Dockerfile、docker-compose.yml のテンプレート
+- Docker用のVSCode設定
 
 ### （追加可能）
 

@@ -15,13 +15,7 @@
   "editor.detectIndentation": true,
   "editor.wordWrap": "on",
   "editor.rulers": [80, 120],
-  "editor.minimap.enabled": true,
-  "editor.minimap.maxColumn": 120,
   "editor.lineNumbers": "on",
-  "editor.renderWhitespace": "boundary",
-  "editor.cursorBlinking": "smooth",
-  "editor.cursorSmoothCaretAnimation": "on",
-  "editor.smoothScrolling": true,
   "editor.mouseWheelZoom": true,
 
   // --------------------------------------------------------------------------
@@ -89,9 +83,6 @@
   "workbench.startupEditor": "welcomePage",
   "workbench.colorTheme": "Default Dark+",
   "workbench.iconTheme": "vs-seti",
-  "workbench.editor.enablePreview": false,
-  "workbench.editor.limit.enabled": true,
-  "workbench.editor.limit.value": 10,
   
   // --------------------------------------------------------------------------
   // ターミナル
@@ -99,13 +90,11 @@
   "terminal.integrated.fontSize": 13,
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.cursorStyle": "line",
-  "terminal.integrated.scrollback": 10000,
 
   // --------------------------------------------------------------------------
   // Git統合
   // --------------------------------------------------------------------------
   "git.enabled": true,
-  "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.ignoreMissingGitWarning": false,
@@ -116,9 +105,7 @@
   // --------------------------------------------------------------------------
   "explorer.confirmDelete": true,
   "explorer.confirmDragAndDrop": true,
-  "breadcrumbs.enabled": true,
   "telemetry.telemetryLevel": "off",
   "update.mode": "default",
-  "extensions.autoUpdate": true,
   "security.workspace.trust.enabled": true
 }
