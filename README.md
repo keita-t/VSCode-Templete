@@ -1,6 +1,7 @@
 # VSCode Project Template Setup
 
 GitHubからVSCodeプロジェクト設定テンプレートを自動ダウンロードして配置するツールです。
+設定ファイルのマージによる柔軟な差分設定をサポートしています。
 
 ## 🚀 クイックスタート
 
@@ -57,6 +58,57 @@ templates/
 # 複数テンプレートを組み合わせる（後が優先）
 ./vscode-project-startup.sh default/base my-template
 ```
+
+### 設定ファイルのマージ
+
+このツールの最大の特徴は、既存のプロジェクト設定を上書きせず、**マージ**することです。
+
+#### JSONファイルのマージ
+
+`settings.json`、`launch.json`、`*.code-snippets`などのJSONファイルは、既存の設定と自動的にマージされます：
+
+```bash
+# 既存のプロジェクトに設定を追加
+cd /path/to/existing-project
+
+# 既存の.vscode/settings.jsonがあっても、新しい設定が追加される
+./vscode-project-startup.sh python/base
+
+# さらに追加の設定を重ねる
+./vscode-project-startup.sh python/pylance-lw
+```
+
+**マージの動作：**
+- 新しいキーは追加される
+- 既存のキーは新しい値で上書きされる
+- マージされていないキーは保持される
+- ネストしたオブジェクトも深くマージされる（`jq`使用時）
+
+**例：**
+```json
+// 既存の settings.json
+{
+  "editor.fontSize": 14,
+  "editor.tabSize": 2
+}
+
+// テンプレートの settings.json
+{
+  "editor.tabSize": 4,
+  "python.linting.enabled": true
+}
+
+// マージ後
+{
+  "editor.fontSize": 14,        // 保持
+  "editor.tabSize": 4,          // 上書き
+  "python.linting.enabled": true // 追加
+}
+```
+
+#### その他のファイル
+
+JSONファイル以外（`.gitignore`、`.editorconfig`など）は上書きまたはスキップされます。
 
 ### カテゴリで整理（推奨）
 
