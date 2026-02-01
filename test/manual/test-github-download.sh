@@ -92,18 +92,21 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 
 # ============================================================================
-# テスト1: デフォルトのtemplatesディレクトリ（従来の動作）
+# テスト1: デフォルトのtemplatesディレクトリ（カテゴリ構造対応）
 # ============================================================================
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_1="${TEST_DIR}/test1-default"
 echo -e "${BLUE}--- テスト1: デフォルト動作（オプション無し）---${NC}"
-if run_test "base テンプレート" "${TEST_DIR_1}" "${SCRIPT_PATH}" base; then
-    if [ -f "${TEST_DIR_1}/.gitignore" ] && [ -f "${TEST_DIR_1}/.vscode/settings.json" ]; then
+if run_test "default/base テンプレート" "${TEST_DIR_1}" "${SCRIPT_PATH}" default/base; then
+    PASSED_TESTS=$((PASSED_TESTS + 1))
+    
+    # ファイルが存在するか確認
+    if [ -f "${TEST_DIR_1}/.vscode/settings.json" ] && [ -f "${TEST_DIR_1}/.gitignore" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
-        PASSED_TESTS=$((PASSED_TESTS + 1))
     else
-        echo -e "${RED}✗ ファイル配置失敗${NC}"
+        echo -e "${RED}✗ 期待したファイルが存在しません${NC}"
         FAILED_TESTS=$((FAILED_TESTS + 1))
+        PASSED_TESTS=$((PASSED_TESTS - 1))
     fi
 else
     FAILED_TESTS=$((FAILED_TESTS + 1))
