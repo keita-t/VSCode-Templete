@@ -180,8 +180,12 @@ get_template_folder_mapping() {
         merged_mapping["${key}"]="${DEFAULT_FOLDER_MAPPING[$key]}"
     done
 
+    # テンプレート名からベース名を抽出（サブディレクトリ対応）
+    # 例: "python/base" -> "python", "base" -> "base"
+    local base_template="${template_type%%/*}"
+    
     # テンプレート名を大文字に変換して変数名を構築
-    local mapping_var="${template_type^^}_FOLDER_MAPPING"
+    local mapping_var="${base_template^^}_FOLDER_MAPPING"
 
     # 個別設定が存在するかチェック（動的変数参照）
     if declare -p "$mapping_var" &>/dev/null; then
@@ -210,8 +214,11 @@ get_file_destination() {
     local template_type="$1"
     local filename="$2"
 
+    # テンプレート名からベース名を抽出（サブディレクトリ対応）
+    local base_template="${template_type%%/*}"
+
     # テンプレート名を大文字に変換して変数名を構築
-    local mapping_var="${template_type^^}_FILE_MAPPING"
+    local mapping_var="${base_template^^}_FILE_MAPPING"
 
     # 個別設定が存在する場合はチェック（動的変数参照）
     if declare -p "$mapping_var" &>/dev/null; then
@@ -235,28 +242,43 @@ get_file_destination() {
 get_template_files() {
     local template_type="$1"
     local subfolder="$2"
-    local api_url="https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${TEMPLATE_DIR}/${template_type}/${subfolder}?ref=${BRANCH}"
-
-    # GitHub APIでファイルリストを取得
-    local response
-    if [ -n "$GITHUB_TOKEN" ]; then
-        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "${api_url}")
+    local template_path="${TEMPLATE_DIR}/${template_type}/${subfolder}"
+    
+    # ローカルディレクトリが存在する場合はそちらを使用
+    if [ -d "${template_path}" ]; then
+        # ローカルファイルシステムからファイルリストを取得
+        while IFS= read -r filepath; do
+            local filename=$(basename "${filepath}")
+            if [ -f "${filepath}" ]; then
+                ALL_FILES+=("${template_type}/${subfolder}/${filename}")
+                ALL_FILE_DESTINATIONS+=("${subfolder}")
+                ALL_FILE_TEMPLATES+=("${template_type}")
+            fi
+        done < <(find "${template_path}" -maxdepth 1 -type f)
     else
-        response=$(curl -s "${api_url}")
-    fi
-
-    # ファイル名を抽出
-    local files
-    files=$(echo "${response}" | grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/')
-
-    # ファイルパスの配列を追加
-    while IFS= read -r filename; do
-        if [ -n "$filename" ]; then
-            ALL_FILES+=("${TEMPLATE_DIR}/${template_type}/${subfolder}/${filename}")
-            ALL_FILE_DESTINATIONS+=("${subfolder}")
-            ALL_FILE_TEMPLATES+=("${template_type}")
+        # GitHub APIでファイルリストを取得
+        local api_url="https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${TEMPLATE_DIR}/${template_type}/${subfolder}?ref=${BRANCH}"
+        
+        local response
+        if [ -n "$GITHUB_TOKEN" ]; then
+            response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "${api_url}")
+        else
+            response=$(curl -s "${api_url}")
         fi
-    done <<< "$files"
+
+        # ファイル名を抽出
+        local files
+        files=$(echo "${response}" | grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/')
+
+        # ファイルパスの配列を追加
+        while IFS= read -r filename; do
+            if [ -n "$filename" ]; then
+                ALL_FILES+=("${TEMPLATE_DIR}/${template_type}/${subfolder}/${filename}")
+                ALL_FILE_DESTINATIONS+=("${subfolder}")
+                ALL_FILE_TEMPLATES+=("${template_type}")
+            fi
+        done <<< "$files"
+    fi
 }
 
 # 使用方法を表示
@@ -378,7 +400,7 @@ trap cleanup EXIT
 
 # --- ファイルダウンロード ---
 
-# ファイルをダウンロード
+# ファイルをダウンロード（またはコピー）
 echo "ダウンロード中... (${#FILES[@]} files)"
 SUCCESS_COUNT=0
 FAIL_COUNT=0
@@ -389,21 +411,32 @@ for file in "${FILES[@]}"; do
         continue
     fi
 
-    url="${BASE_URL}/${file}"
     dest_file="${TEMP_DIR}/${file}"
     mkdir -p "$(dirname "${dest_file}")"
-
-    if [ -n "$GITHUB_TOKEN" ]; then
-        if curl -s -f -H "Authorization: token $GITHUB_TOKEN" -o "${dest_file}" "${url}"; then
+    
+    # ローカルファイルが存在する場合はコピー
+    local_file="${TEMPLATE_DIR}/${file}"
+    if [ -f "${local_file}" ]; then
+        if cp "${local_file}" "${dest_file}"; then
             ((SUCCESS_COUNT++))
         else
             ((FAIL_COUNT++))
         fi
     else
-        if curl -s -f -o "${dest_file}" "${url}"; then
-            ((SUCCESS_COUNT++))
+        # GitHubからダウンロード
+        url="${BASE_URL}/${file}"
+        if [ -n "$GITHUB_TOKEN" ]; then
+            if curl -s -f -H "Authorization: token $GITHUB_TOKEN" -o "${dest_file}" "${url}"; then
+                ((SUCCESS_COUNT++))
+            else
+                ((FAIL_COUNT++))
+            fi
         else
-            ((FAIL_COUNT++))
+            if curl -s -f -o "${dest_file}" "${url}"; then
+                ((SUCCESS_COUNT++))
+            else
+                ((FAIL_COUNT++))
+            fi
         fi
     fi
 done
@@ -431,10 +464,26 @@ merge_json_files() {
         return 1
     fi
 
+    # JSONC（コメント付きJSON）からコメントを削除してマージ
+    # 行コメント（//）とブロックコメント（/* */）を削除
+    local base_clean=$(mktemp)
+    local new_clean=$(mktemp)
+    
+    # コメントを削除（簡易的な処理）
+    sed 's|//.*||g' "${base_file}" | grep -v '^\s*$' > "${base_clean}"
+    sed 's|//.*||g' "${new_file}" | grep -v '^\s*$' > "${new_clean}"
+    
     # JSONファイルをマージ（深い階層まで統合）
-    jq -s '.[0] * .[1]' "${base_file}" "${new_file}" > "${output_file}"
-    return 0
+    if jq -s '.[0] * .[1]' "${base_clean}" "${new_clean}" > "${output_file}" 2>/dev/null; then
+        rm -f "${base_clean}" "${new_clean}"
+        return 0
+    else
+        # マージ失敗時は新しいファイルで上書き
+        rm -f "${base_clean}" "${new_clean}"
+        return 1
+    fi
 }
+
 
 for i in "${!FILES[@]}"; do
     file="${FILES[$i]}"

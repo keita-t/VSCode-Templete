@@ -9,10 +9,13 @@
 ./vscode-project-startup.sh base
 
 # Python環境をセットアップ
-./vscode-project-startup.sh base python
+./vscode-project-startup.sh base python/base
+
+# Python + Pylance最適化
+./vscode-project-startup.sh base python/base python/pylance-lw
 
 # 複数のテンプレートを組み合わせ
-./vscode-project-startup.sh base python docker
+./vscode-project-startup.sh base python/base docker
 ```
 
 ## 📁 プロジェクト構造
@@ -30,11 +33,14 @@ VSCode-Templete/
 │   ├── base/                     # 基本設定
 │   │   ├── git/.gitignore        # 汎用.gitignore
 │   │   └── vscode/settings.json  # 汎用VSCode設定
-│   ├── python/                   # Python環境
-│   │   ├── git/.gitignore        # Python用.gitignore
-│   │   └── vscode/
-│   │       ├── settings.json     # Python用設定
-│   │       └── python.code-snippets  # Pythonスニペット
+│   ├── lightweight/              # メモリ最適化設定
+│   │   └── vscode/settings.json
+│   ├── python/                   # Python関連テンプレート
+│   │   ├── base/                 # Python基本設定
+│   │   │   ├── vscode/settings.json
+│   │   │   └── snippets/python.code-snippets
+│   │   └── pylance-lw/           # Pylance軽量版
+│   │       └── vscode/settings.json
 │   ├── docker/                   # Docker環境
 │   │   ├── config/
 │   │   │   ├── Dockerfile
@@ -146,20 +152,31 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 ### Python開発環境
 
 ```bash
-./vscode-project-startup.sh base python
+# Python基本設定
+./vscode-project-startup.sh base python/base
+
+# Python + Pylance最適化（メモリ使用量を削減）
+./vscode-project-startup.sh base python/base python/pylance-lw
 ```
 
-### React Native + iOS
+### メモリ最適化設定
 
 ```bash
-./vscode-project-startup.sh base react-native ios
+# 軽量なVSCode設定
+./vscode-project-startup.sh base lightweight
+```
+
+### Docker開発環境
+
+```bash
+./vscode-project-startup.sh base docker
 ```
 
 ### 階層的な設定
 
 ```bash
-# 基本 → チーム設定 → 個人設定の順で適用
-./vscode-project-startup.sh base team-config my-preferences
+# 基本 → カテゴリ → 特殊設定の順で適用
+./vscode-project-startup.sh base python/base python/pylance-lw
 ```
 
 ## 📝 テンプレートの作成
@@ -178,10 +195,37 @@ templates/
         └── .editorconfig
 ```
 
-### 2. 実行
+### 2. カテゴリフォルダで整理（推奨）
+
+関連するテンプレートをカテゴリフォルダで階層化できます：
 
 ```bash
+templates/
+├── python/
+│   ├── base/             # Python基本設定
+│   │   ├── vscode/settings.json
+│   │   └── snippets/python.code-snippets
+│   └── pylance-lw/       # Pylance軽量版
+│       └── vscode/settings.json
+└── javascript/
+    ├── base/
+    └── react/
+```
+
+使用例：
+```bash
+# カテゴリ/サブテンプレートとして指定
+./vscode-project-startup.sh base python/base python/pylance-lw
+```
+
+### 3. 実行
+
+```bash
+# 単一テンプレート
 ./vscode-project-startup.sh my-template
+
+# 階層化されたテンプレート
+./vscode-project-startup.sh python/base
 ```
 
 ## 🔧 カスタム設定
@@ -205,9 +249,12 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 | テンプレート内 | プロジェクト内 |
 |---------------|----------------|
 | `vscode/`     | `.vscode/`     |
-| `git/`        | `.git`         |
-| `config/`     | `.`            |
-| `docker/`     | `.`            |
+| `snippets/`   | `.vscode/`     |
+| `git/`        | `.`（プロジェクトルート） |
+| `config/`     | `.`（プロジェクトルート） |
+| `docker/`     | `.`（プロジェクトルート） |
+
+**注意:** `snippets/`フォルダは`.vscode/`に配置されるため、VSCodeスニペットの管理に最適です。
 
 ## 📚 テンプレート一覧
 
@@ -215,7 +262,7 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 
 汎用的な基本設定
 
-- `.gitignore`: OS、エディタ、一般的な除外設定
+- `.gitignore`: OS、エディタ、Python全般の除外設定（統合版）
 - `settings.json`: VSCodeの基本設定（視覚効果は含まない）
 
 ### lightweight
@@ -227,22 +274,23 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 - Gitの自動機能を無効化してパフォーマンス向上
 - 使用例: `./vscode-project-startup.sh base lightweight`
 
-### python
+### python/base
 
-Python開発環境の設定
+Python基本設定
 
-- VSCode設定（Python固有）
-- Pythonインタープリター、環境変数設定
-- pytest設定
+- Python固有のVSCode設定（tabSize: 4、rulers、フォーマッター）
+- Pythonスニペット
+- baseとのマージ前提（単体では不完全）
+- 使用例: `./vscode-project-startup.sh base python/base`
 
-### pylance-lw
+### python/pylance-lw
 
 Pylanceメモリ最適化設定
 
 - Python開発でPylanceのメモリ使用量を削減
-- インデックス無効化、診断モードの制限、キャッシュ無効化
+- インデックス無効化、診断モードの制限、メモリ上限設定
 - 低スペックマシンや大規模Pythonプロジェクト向け
-- 使用例: `./vscode-project-startup.sh base python pylance-lw`
+- 使用例: `./vscode-project-startup.sh base python/base python/pylance-lw`
 
 ### docker
 
@@ -251,9 +299,10 @@ Docker開発環境の設定
 - Dockerfile、docker-compose.yml のテンプレート
 - Docker用のVSCode設定
 
-### （追加可能）
+### カスタムテンプレート
 
-独自のテンプレートを `templates/` 配下に作成できます
+独自のテンプレートを `templates/` 配下に作成できます。
+階層化もサポートしています（例: `myproject/dev`, `myproject/prod`）
 
 ## 🤝 貢献
 
