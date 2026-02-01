@@ -41,7 +41,7 @@ templates/
 |---------------|---------------------|
 | `vscode/`     | `.vscode/`          |
 | `snippets/`   | `.vscode/`          |
-| `git/`        | `.git`              |
+| `git/`        | `.git/`             |
 | `config/`     | `.`（ルート）       |
 | `docker/`     | `.`（ルート）       |
 
