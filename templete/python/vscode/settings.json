@@ -1,0 +1,47 @@
+{
+    // Python インタープリター設定（重要：仮想環境を使用）
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+    
+    // pytest 設定（VSCode Test Explorer用）
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "-v",
+        "--tb=short"
+    ],
+    
+    // Pylance 分析設定（デフォルト）
+    
+    // 環境変数設定
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+    
+    // Python実行時の環境変数
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.executeInFileDir": false,
+    // --- Pylanceメモリ抑制設定 ---
+    "python.analysis.indexing": false,
+    "python.analysis.userFileIndexingLimit": 500,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.autoImportCompletions": false,
+    "python.analysis.persistAllIndices": false,
+    "python.analysis.cacheLSPData": false,
+    "python.analysis.nodeArguments": ["--max-old-space-size=1024"],
+    // メモリ最適化: ファイルウォッチ・検索除外
+    "files.watcherExclude": {
+        "**/node_modules/*": true,
+        "**/build/*": true,
+        "**/.venv/*": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/build": true,
+        "**/.venv": true
+    },
+    // メモリ最適化: エディタ同時表示数制限
+    "workbench.editor.limit.perEditorGroup": true
+}
