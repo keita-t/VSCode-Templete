@@ -4,22 +4,38 @@
   // ============================================================================
   // テストを実行するタスクを定義します
   //
-  // 【ローカルテスト】
-  //   - Run Local Tests: ローカルテスト（デフォルト、GitHubアクセス不要）
+  // 【pytest】
+  //   - Run Tests (pytest): pytest実行（推奨、高速）
   //
-  // 【統合テスト】
-  //   - Run GitHub Tests: GitHubダウンロード統合テスト（トークン必要）
+  // 【レガシー Bashテスト】
+  //   - Run Local Tests: ローカルテスト（Bash版）
+  //   - Run GitHub Tests: GitHubダウンロード統合テスト（Bash版、トークン必要）
   // ============================================================================
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Local Tests",
+      "label": "Run Tests (pytest)",
       "type": "shell",
-      "command": "./test/manual/test-local-templates.sh",
+      "command": ".venv/bin/pytest tests/ -v",
       "group": {
         "kind": "test",
         "isDefault": true
       },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Local Tests",
+      "type": "shell",
+      "command": "./test/manual/test-local-templates.sh",
+      "group": "test",
       "presentation": {
         "echo": true,
         "reveal": "always",

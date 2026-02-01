@@ -286,7 +286,34 @@ declare -A MY_TEMPLATE_FOLDER_MAPPING=(
 
 詳細は [docs/development.md](docs/development.md) を参照してください。
 
-## � GitHub Personal Access Token（オプション）
+## 🧪 テスト
+
+### pytest (推奨)
+
+```bash
+# 開発環境のセットアップ
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+# テスト実行
+pytest tests/ -v
+
+# VS Code タスクから実行
+# Ctrl+Shift+P → "Run Test Task" → "Run Tests (pytest)"
+```
+
+### レガシーBashテスト
+
+```bash
+# ローカルテンプレートテスト
+./test/manual/test-local-templates.sh
+
+# GitHubダウンロードテスト（トークン必要）
+./test/manual/test-github-download.sh
+```
+
+## 🔑 GitHub Personal Access Token（オプション）
 
 このリポジトリはパブリックなので通常トークンは不要です。プライベートフォークを使用する場合やAPI rate limitを回避したい場合に設定してください。
 

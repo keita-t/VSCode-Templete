@@ -196,22 +196,22 @@ def get_venv_python(venv_path: Path) -> Path:
 def get_venv_site_packages(venv_path: Path) -> Optional[Path]:
     """仮想環境のsite-packagesパスを取得"""
     python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
-    
+
     if sys.platform == "win32":
         site_packages = venv_path / "Lib" / "site-packages"
     else:
         site_packages = venv_path / "lib" / python_version / "site-packages"
-    
+
     return site_packages if site_packages.exists() else None
 
 
 def setup_venv(project_dir: Path) -> bool:
     """仮想環境をセットアップ"""
     venv_path = get_venv_path(project_dir)
-    
+
     if venv_path.exists():
         return True
-    
+
     print(f"{Colors.BLUE}仮想環境を作成中: {venv_path}{Colors.NC}")
     try:
         subprocess.run(
@@ -230,11 +230,11 @@ def install_packages_in_venv(project_dir: Path, packages: List[str]) -> bool:
     """仮想環境にパッケージをインストール"""
     venv_path = get_venv_path(project_dir)
     venv_python = get_venv_python(venv_path)
-    
+
     if not venv_python.exists():
         print_error(f"仮想環境のPythonが見つかりません: {venv_python}")
         return False
-    
+
     print(f"{Colors.BLUE}パッケージをインストール中: {', '.join(packages)}{Colors.NC}")
     try:
         subprocess.run(
@@ -253,7 +253,7 @@ def add_venv_to_path(project_dir: Path) -> None:
     """仮想環境のsite-packagesをsys.pathに追加"""
     venv_path = get_venv_path(project_dir)
     site_packages = get_venv_site_packages(venv_path)
-    
+
     if site_packages and site_packages not in [Path(p) for p in sys.path]:
         sys.path.insert(0, str(site_packages))
 
@@ -306,7 +306,7 @@ def check_and_install_dependencies(merge_patterns: List[str], project_dir: Path)
                 response = 'yes'
             else:
                 response = input(f"{Colors.BLUE}プロジェクトの.venv環境にこれらのパッケージをインストールしますか? [Y/n]: {Colors.NC}").strip().lower()
-            
+
             if response in ['', 'y', 'yes']:
                 # 仮想環境をセットアップ
                 if not setup_venv(project_dir):
@@ -314,12 +314,12 @@ def check_and_install_dependencies(merge_patterns: List[str], project_dir: Path)
                     print(f"{Colors.YELLOW}該当フォーマットのマージは上書きモードで動作します。{Colors.NC}")
                     print()
                     return
-                
+
                 # パッケージをインストール
                 if install_packages_in_venv(project_dir, required_packages):
                     # sys.pathに追加してインポート可能にする
                     add_venv_to_path(project_dir)
-                    
+
                     # グローバル変数を更新
                     if "pyyaml" in required_packages:
                         try:
@@ -327,7 +327,7 @@ def check_and_install_dependencies(merge_patterns: List[str], project_dir: Path)
                             HAS_YAML = True
                         except ImportError:
                             pass
-                    
+
                     if any(pkg in ["tomli", "tomli-w"] for pkg in required_packages):
                         try:
                             import tomli
@@ -340,7 +340,7 @@ def check_and_install_dependencies(merge_patterns: List[str], project_dir: Path)
                                 HAS_TOML = True
                             except ImportError:
                                 pass
-                    
+
                     print()
                 else:
                     print(f"{Colors.YELLOW}該当フォーマットのマージは上書きモードで動作します。{Colors.NC}")
@@ -447,7 +447,7 @@ def merge_yaml_files(existing_file: Path, new_file: Path, output_file: Path) -> 
     try:
         # インポートを遅延実行（.venvからのインポートを可能にするため）
         import yaml
-        
+
         with existing_file.open('r', encoding='utf-8') as f:
             existing_data = yaml.safe_load(f) or {}
 
@@ -477,9 +477,9 @@ def merge_toml_files(existing_file: Path, new_file: Path, output_file: Path) -> 
             import tomli
         except ImportError:
             import tomllib as tomli
-        
+
         import tomli_w
-        
+
         with existing_file.open('rb') as f:
             existing_data = tomli.load(f)
 
