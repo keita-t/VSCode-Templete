@@ -268,7 +268,16 @@ echo ""
 
 # クリーンアップ（失敗時は保持）
 if [ ${FAILED_TESTS} -eq 0 ]; then
+    # 今回のテストディレクトリを削除
     rm -rf "${TEST_DIR}"
+    
+    # 過去の残骸も削除
+    OLD_DIRS=$(find /tmp -maxdepth 1 -type d -name "github-download-test-*" 2>/dev/null)
+    if [ -n "${OLD_DIRS}" ]; then
+        echo "${OLD_DIRS}" | xargs rm -rf
+        echo -e "${GREEN}✓ 過去のテスト残骸も削除しました${NC}"
+    fi
+    
     echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
     echo -e "${GREEN}✓ テストディレクトリを自動削除しました${NC}"
     exit 0
