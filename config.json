@@ -1,0 +1,39 @@
+{
+  "github": {
+    "user": "keita-t",
+    "repo": "VSCode-Templete",
+    "branch": "main"
+  },
+  "folder_mapping": {
+    "vscode": ".vscode",
+    "snippets": ".vscode",
+    "git": ".",
+    "config": ".",
+    "docker": "."
+  },
+  "file_mapping": {
+    ".gitignore": ".",
+    ".dockerignore": ".",
+    ".editorconfig": "."
+  },
+  "merge_patterns": [
+    "*.json",
+    "*.code-snippets",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.xml"
+  ],
+  "templates": {
+    "python": {
+      "folder_mapping": {
+        "docs": "docs",
+        "tests": "tests"
+      },
+      "file_mapping": {
+        "requirements.txt": ".",
+        "setup.py": "."
+      }
+    }
+  }
+}
