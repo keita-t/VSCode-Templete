@@ -74,6 +74,21 @@ pip install pyyaml tomli-w
     "*.toml",
     "*.xml"
   ],
+  "github_file_patterns": [
+    "settings.json",
+    "extensions.json",
+    "launch.json",
+    "tasks.json",
+    ".gitignore",
+    ".dockerignore",
+    ".editorconfig",
+    "Dockerfile",
+    "docker-compose.yml",
+    "pyproject.toml",
+    "requirements.txt",
+    "package.json",
+    "tsconfig.json"
+  ],
   "templates": {
     "python": {
       "folder_mapping": {
@@ -93,8 +108,17 @@ pip install pyyaml tomli-w
 
 - `github`: 独自のフォークを使用する場合に変更
 - `folder_mapping`: カスタムフォルダマッピングを追加
-- `merge_patterns`: マージ対象ファイルパターンを追加
+- `merge_patterns`: マージ対象ファイルパターンを追加（ワイルドカード対応）
+- `github_file_patterns`: GitHubからテンプレートを取得する際に探索するファイル名リスト
 - `templates.<name>`: テンプレート固有の設定を追加
+
+### 設定項目の詳細
+
+**`github_file_patterns`について：**
+- GitHubからテンプレートを取得する際に試行するファイル名のリスト
+- ローカルモード（`-l`オプション使用時）では無視されます
+- プロジェクトで使用する可能性のあるファイルを追加してください
+- 例：`"Makefile"`, `"CMakeLists.txt"`, `"go.mod"` など
 
 ## 📝 カスタムテンプレートの作り方
 

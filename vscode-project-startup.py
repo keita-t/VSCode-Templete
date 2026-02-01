@@ -117,6 +117,21 @@ class Config:
                 "*.toml",
                 "*.xml"
             ],
+            "github_file_patterns": [
+                "settings.json",
+                "extensions.json",
+                "launch.json",
+                "tasks.json",
+                ".gitignore",
+                ".dockerignore",
+                ".editorconfig",
+                "Dockerfile",
+                "docker-compose.yml",
+                "pyproject.toml",
+                "requirements.txt",
+                "package.json",
+                "tsconfig.json"
+            ],
             "templates": {
                 "python": {
                     "folder_mapping": {
@@ -162,6 +177,21 @@ class Config:
     @property
     def merge_patterns(self) -> List[str]:
         return self._config["merge_patterns"]
+
+    @property
+    def github_file_patterns(self) -> List[str]:
+        """GitHubファイル探索で試行するファイルパターン"""
+        return self._config.get("github_file_patterns", [
+            "settings.json",
+            "extensions.json",
+            "launch.json",
+            "tasks.json",
+            ".gitignore",
+            "Dockerfile",
+            "docker-compose.yml",
+            "pyproject.toml",
+            "requirements.txt",
+        ])
 
     def get_template_folder_mapping(self, template_name: str) -> Dict[str, str]:
         """テンプレート固有のフォルダマッピングを取得"""
@@ -467,23 +497,13 @@ class TemplateSource:
         return files
 
     def _list_github_files_simple(self, base_path: str) -> List[str]:
-        """GitHubファイルを簡易リスト（既知のパターンを試行）"""
+        """GitHubファイルを簡易リスト（設定されたパターンを試行）"""
         # 注: これは簡易実装。実際のGitHub API実装が必要
-        # 現時点ではシェルスクリプトと同様に、既知のファイルパターンを試行
-        common_patterns = [
-            "settings.json",
-            "extensions.json",
-            "launch.json",
-            "tasks.json",
-            ".gitignore",
-            "Dockerfile",
-            "docker-compose.yml",
-            "pyproject.toml",
-            "requirements.txt",
-        ]
+        # config.jsonで設定されたファイルパターンを試行
+        file_patterns = self.config.github_file_patterns
 
         found_files = []
-        for pattern in common_patterns:
+        for pattern in file_patterns:
             test_path = f"{base_path}/{pattern}"
             if self.get_file_content(test_path):
                 found_files.append(pattern)

@@ -24,6 +24,21 @@
     "*.toml",
     "*.xml"
   ],
+  "github_file_patterns": [
+    "settings.json",
+    "extensions.json",
+    "launch.json",
+    "tasks.json",
+    ".gitignore",
+    ".dockerignore",
+    ".editorconfig",
+    "Dockerfile",
+    "docker-compose.yml",
+    "pyproject.toml",
+    "requirements.txt",
+    "package.json",
+    "tsconfig.json"
+  ],
   "templates": {
     "python": {
       "folder_mapping": {
