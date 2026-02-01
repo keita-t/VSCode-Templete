@@ -6,16 +6,16 @@
 
 ```bash
 # 基本的な使い方
-./vscode-project-startup.sh base
+./vscode-project-startup.sh default/base
 
 # Python環境をセットアップ
-./vscode-project-startup.sh base python/base
+./vscode-project-startup.sh default/base python/base
 
 # Python + Pylance最適化
-./vscode-project-startup.sh base python/base python/pylance-lw
+./vscode-project-startup.sh default/base python/base python/pylance-lw
 
 # 複数のテンプレートを組み合わせ
-./vscode-project-startup.sh base python/base docker
+./vscode-project-startup.sh default/base python/base docker
 ```
 
 ## 📁 プロジェクト構造
@@ -30,11 +30,12 @@ VSCode-Templete/
 │   ├── settings.json             # VSCode設定
 │   └── tasks.json                # タスク定義（テスト実行など）
 ├── templates/                    # テンプレートフォルダ
-│   ├── base/                     # 基本設定
-│   │   ├── git/.gitignore        # 汎用.gitignore
-│   │   └── vscode/settings.json  # 汎用VSCode設定
-│   ├── lightweight/              # メモリ最適化設定
-│   │   └── vscode/settings.json
+│   ├── default/                  # 汎用テンプレート
+│   │   ├── base/                 # 基本設定
+│   │   │   ├── git/.gitignore    # 汎用.gitignore
+│   │   │   └── vscode/settings.json  # 汎用VSCode設定
+│   │   └── lightweight/          # メモリ最適化設定
+│   │       └── vscode/settings.json
 │   ├── python/                   # Python関連テンプレート
 │   │   ├── base/                 # Python基本設定
 │   │   │   ├── vscode/settings.json
@@ -146,37 +147,37 @@ GitHub Settings → Developer settings → Personal access tokens → Tokens (cl
 ### 基本設定のみ
 
 ```bash
-./vscode-project-startup.sh base
+./vscode-project-startup.sh default/base
 ```
 
 ### Python開発環境
 
 ```bash
 # Python基本設定
-./vscode-project-startup.sh base python/base
+./vscode-project-startup.sh default/base python/base
 
 # Python + Pylance最適化（メモリ使用量を削減）
-./vscode-project-startup.sh base python/base python/pylance-lw
+./vscode-project-startup.sh default/base python/base python/pylance-lw
 ```
 
 ### メモリ最適化設定
 
 ```bash
 # 軽量なVSCode設定
-./vscode-project-startup.sh base lightweight
+./vscode-project-startup.sh default/base default/lightweight
 ```
 
 ### Docker開発環境
 
 ```bash
-./vscode-project-startup.sh base docker
+./vscode-project-startup.sh default/base docker
 ```
 
 ### 階層的な設定
 
 ```bash
 # 基本 → カテゴリ → 特殊設定の順で適用
-./vscode-project-startup.sh base python/base python/pylance-lw
+./vscode-project-startup.sh default/base python/base python/pylance-lw
 ```
 
 ## 📝 テンプレートの作成
@@ -215,17 +216,17 @@ templates/
 使用例：
 ```bash
 # カテゴリ/サブテンプレートとして指定
-./vscode-project-startup.sh base python/base python/pylance-lw
+./vscode-project-startup.sh default/base python/base python/pylance-lw
 ```
 
 ### 3. 実行
 
 ```bash
-# 単一テンプレート
-./vscode-project-startup.sh my-template
-
 # 階層化されたテンプレート
 ./vscode-project-startup.sh python/base
+
+# defaultカテゴリのテンプレート
+./vscode-project-startup.sh default/base
 ```
 
 ## 🔧 カスタム設定
@@ -258,21 +259,22 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 
 ## 📚 テンプレート一覧
 
-### base
+### default/base
 
 汎用的な基本設定
 
 - `.gitignore`: OS、エディタ、Python全般の除外設定（統合版）
 - `settings.json`: VSCodeの基本設定（視覚効果は含まない）
+- 使用例: `./vscode-project-startup.sh default/base`
 
-### lightweight
+### default/lightweight
 
 メモリ最適化設定
 
 - 低スペックマシンや大規模プロジェクト向け
 - 視覚効果の無効化、エディタタブ制限、ファイル監視の最適化
 - Gitの自動機能を無効化してパフォーマンス向上
-- 使用例: `./vscode-project-startup.sh base lightweight`
+- 使用例: `./vscode-project-startup.sh default/base default/lightweight`
 
 ### python/base
 
@@ -280,8 +282,8 @@ Python基本設定
 
 - Python固有のVSCode設定（tabSize: 4、rulers、フォーマッター）
 - Pythonスニペット
-- baseとのマージ前提（単体では不完全）
-- 使用例: `./vscode-project-startup.sh base python/base`
+- default/baseとのマージ前提（単体では不完全）
+- 使用例: `./vscode-project-startup.sh default/base python/base`
 
 ### python/pylance-lw
 
@@ -290,7 +292,7 @@ Pylanceメモリ最適化設定
 - Python開発でPylanceのメモリ使用量を削減
 - インデックス無効化、診断モードの制限、メモリ上限設定
 - 低スペックマシンや大規模Pythonプロジェクト向け
-- 使用例: `./vscode-project-startup.sh base python/base python/pylance-lw`
+- 使用例: `./vscode-project-startup.sh default/base python/base python/pylance-lw`
 
 ### docker
 
