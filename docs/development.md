@@ -1,121 +1,150 @@
-# VSCode Project Template Setup - AI Coding Assistant Instructions
+# VSCode Project Template Setup - AI コーディング支援用ドキュメント
 
-## Project Overview
+## プロジェクト概要
 
-This is a **template distribution system** that downloads VSCode project configurations from GitHub and applies them to any project directory. Think of it as a "dotfiles manager" specifically for VSCode project settings.
+これは、VSCodeプロジェクト設定をGitHubからダウンロードして任意のプロジェクトディレクトリに適用する**テンプレート配布システム**です。VSCodeプロジェクト設定専用の「dotfilesマネージャー」と考えてください。
 
-**Core Concept**: Users run `./vscode-project-startup.sh <template-name>` to download and merge template files (settings.json, .gitignore, etc.) from the `templete/` directory into their project.
+**コアコンセプト**: ユーザーが`./vscode-project-startup.sh <template-name>`を実行すると、`templates/`ディレクトリからテンプレートファイル（settings.json、.gitignoreなど）をダウンロードしてプロジェクトにマージします。
 
-## Architecture & Key Components
+## アーキテクチャと主要コンポーネント
 
-### Main Script: vscode-project-startup.sh
+### メインスクリプト: vscode-project-startup.sh
 
-**Configuration-Driven Design**: The script is highly extensible through Bash associative arrays. New templates work automatically with default mappings, and custom mappings are added by declaring `<TEMPLATE>_FOLDER_MAPPING` arrays.
+**設定駆動設計**: スクリプトはBashの連想配列を通じて高い拡張性を持ちます。新しいテンプレートはデフォルトマッピングで自動的に動作し、カスタムマッピングは`<TEMPLATE>_FOLDER_MAPPING`配列を宣言することで追加できます。
 
-**Critical Mappings** (lines 31-63):
-- `DEFAULT_FOLDER_MAPPING`: Maps template subdirs to project locations
-  - `vscode/` → `.vscode/` (VSCode settings)
-  - `git/` → `.` (project root, for .gitignore)
-  - `config/` → `.` (for .editorconfig, etc.)
-- `DEFAULT_MERGE_SETTING`: Patterns for files to merge (not overwrite): `*.json`, `*.code-snippets`
-- Template-specific mappings: e.g., `PYTHON_FOLDER_MAPPING` adds `docs/` and `tests/` directories
+**重要なマッピング** (31-63行目):
+- `DEFAULT_FOLDER_MAPPING`: テンプレートのサブディレクトリをプロジェクト内の場所にマップ
+  - `vscode/` → `.vscode/` (VSCode設定)
+  - `git/` → `.` (プロジェクトルート、.gitignore用)
+  - `config/` → `.` (.editorconfigなど用)
+- `DEFAULT_MERGE_SETTING`: マージするファイルのパターン（上書きしない）: `*.json`, `*.code-snippets`
+- テンプレート固有のマッピング: 例）`PYTHON_FOLDER_MAPPING`は`docs/`と`tests/`ディレクトリを追加
 
-**JSON Merge Strategy** (lines 368-383): Uses `jq` to deep-merge JSON files when updating existing projects. This allows incremental updates without losing existing settings. Falls back to simple overwrite if `jq` unavailable.
+**JSONマージ戦略** (368-383行目): 既存プロジェクトを更新する際、`jq`を使用してJSONファイルを深くマージします。これにより既存設定を失わずに段階的な更新が可能です。`jq`が利用できない場合は単純上書きにフォールバックします。
 
-### Template Structure
+### テンプレート構造
 
 ```
-templete/
-├── base/           # Generic settings for any project
-├── python/         # Python-specific extensions to base
-└── docker/         # Docker-specific configurations
+templates/
+├── base/           # すべてのプロジェクト用の汎用設定
+├── python/         # baseを拡張するPython固有設定
+└── docker/         # Docker固有の設定
 ```
 
-**Layering Pattern**: Templates are designed to be composed. Run `./vscode-project-startup.sh base python` to apply base first, then Python-specific overrides. Later templates override earlier ones.
+**レイヤリングパターン**: テンプレートは組み合わせて使用するよう設計されています。`./vscode-project-startup.sh base python`を実行すると、最初にbaseを適用し、次にPython固有のオーバーライドを適用します。後から指定したテンプレートが優先されます。
 
-## Development Workflows
+## 開発ワークフロー
 
-### Testing
+### テスト
 
-**Two-tier test strategy**:
+**2段階テスト戦略**:
 
-1. **BATS Unit Tests** (primary): `bats test/vscode-project-startup.bats`
-   - Tests individual functions in isolation
-   - Run via VS Code task: "Run BATS Tests" (default test task)
-   - Filter specific tests: `bats --filter "merge"` or use "Run BATS Tests (Filter)" task
-   - **Coverage**: Mapping resolution, JSON merge logic, file destination calculation
+1. **ローカルテスト** (推奨): `./test/manual/test-local-templates.sh`
+   - ローカルの`templates/test`を使用して高速テスト（GitHubアクセス不要）
+   - VS Codeタスクから実行: "Run Local Tests"（デフォルトテストタスク）
+   - **カバレッジ**: ファイル配置ロジック、JSONマージ、ディレクトリ構造
 
-2. **Manual Integration Tests**: `./test/manual/test-local.sh` and `test-merge.sh`
-   - Full end-to-end validation with real file operations
-   - Use for visual verification of file placement and merging
+2. **GitHub統合テスト**: `./test/manual/test-github-download.sh`
+   - GitHub APIを使用した実際のダウンロードをテスト
+   - VS Codeタスクから実行: "Run GitHub Tests"
+   - **カバレッジ**: GitHub API認証、ダウンロード、テンプレートディレクトリオプション
 
-### Adding New Templates
+### 新しいテンプレートの追加
 
-1. Create `templete/<name>/` directory with standard subdirs (vscode/, git/, config/)
-2. Add files in appropriate subdirectories
-3. (Optional) Add custom mappings in script if defaults don't fit:
+1. 標準サブディレクトリ（vscode/、git/、config/）を持つ`templates/<name>/`ディレクトリを作成
+2. 適切なサブディレクトリにファイルを追加
+3. （オプション）デフォルトが合わない場合、スクリプトにカスタムマッピングを追加:
    ```bash
    declare -A MYTEMPLATE_FOLDER_MAPPING=(["special"]="custom/path")
    ```
-4. Test with `./vscode-project-startup.sh mytemplate` in a temporary directory
+4. 一時ディレクトリで`./vscode-project-startup.sh mytemplate`を実行してテスト
 
-## Project-Specific Conventions
+## プロジェクト固有の規約
 
-### Configuration Over Code
+### 設定優先のアプローチ
 
-- **No hardcoded paths**: All file placement is driven by mapping arrays
-- **Default-first design**: New templates work immediately without configuration
-- **Bash associative arrays**: Used extensively for flexible configuration (requires Bash 4+)
+- **ハードコードされたパスなし**: すべてのファイル配置はマッピング配列によって駆動
+- **デフォルト優先設計**: 新しいテンプレートは設定なしですぐに動作
+- **Bash連想配列**: 柔軟な設定のために広範囲に使用（Bash 4+が必要）
 
-### File Naming Patterns
+### ファイル命名パターン
 
-- Templates use subdirectory names (`vscode/`, `git/`) to indicate destination
-- Individual files can override via `<TEMPLATE>_FILE_MAPPING` (e.g., `requirements.txt` → project root)
+- テンプレートはサブディレクトリ名（`vscode/`、`git/`）を使用して配置先を示す
+- 個別ファイルは`<TEMPLATE>_FILE_MAPPING`で上書き可能（例：`requirements.txt` → プロジェクトルート）
 
-### Color-Coded Output
+### カラー出力
 
-- Green (✓): Success
-- Yellow (!): Warning or merge operation
-- Red (✗): Error
-- Blue: Informational headers
+- 緑（✓）: 成功
+- 黄（!）: 警告またはマージ操作
+- 赤（✗）: エラー
+- 青: 情報ヘッダー
 
-Uses ANSI color codes defined at top of script (lines 14-17).
+スクリプトの先頭で定義されたANSIカラーコードを使用（14-17行目）。
 
-### JSON Merging Details
+### JSONマージの詳細
 
-When a target file exists and matches `DEFAULT_MERGE_SETTING` patterns:
-1. Creates timestamped backup: `filename.backup.20260201_123045`
-2. Uses `jq -s '.[0] * .[1]'` for deep merge (right side wins on conflicts)
-3. Falls back to overwrite if `jq` missing (with warning)
+対象ファイルが存在し、`DEFAULT_MERGE_SETTING`パターンに一致する場合:
+1. タイムスタンプ付きバックアップを作成: `filename.backup.20260201_123045`
+2. `jq -s '.[0] * .[1]'`を使用して深くマージ（競合時は右側が優先）
+3. `jq`がない場合は上書きにフォールバック（警告付き）
 
-## Integration Points
+## 統合ポイント
 
-- **GitHub API**: Uses `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/` to list files
-- **GitHub Raw**: Downloads via `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/${BRANCH}/`
-- **Dependencies**:
-  - `curl` (required): Download files
-  - `jq` (optional): JSON merging
-  - `bats` (development): Unit testing
+- **GitHub API**: `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/`を使用してファイルをリスト
+- **GitHub Raw**: `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/${BRANCH}/`経由でダウンロード
+- **依存関係**:
+  - `curl`（必須）: ファイルダウンロード
+  - `jq`（オプション）: JSONマージ
+  - プライベートリポジトリの場合: `GITHUB_TOKEN`（環境変数、.github_token、または~/.config/vscode-templates/token）
 
-## Critical Configuration
+## 重要な設定
 
-**MUST SET** in script before first use (line 37):
+**初回使用前に必ず設定**（37行目）:
 ```bash
-GITHUB_USER="YOUR_GITHUB_USERNAME"  # Change to your actual username
+GITHUB_USER="keita-t"  # 実際のGitHubユーザー名に変更
 ```
 
-Without this, GitHub API calls fail (repo not found).
+これがないとGitHub APIコールが失敗します（リポジトリが見つからない）。
 
-## Common Pitfalls
+### GitHub Token設定（プライベートリポジトリの場合）
 
-1. **Case sensitivity**: Template names are case-sensitive but converted to uppercase for variable lookup (`python` → `PYTHON_FOLDER_MAPPING`)
-2. **Mapping precedence**: File mappings override folder mappings for specific files
-3. **Multiple templates**: Order matters - later templates override earlier ones
-4. **Bash version**: Requires Bash 4+ for associative arrays (check with `bash --version`)
-5. **JSON merge requires jq**: Install with `brew install jq` or `apt-get install jq` for merge functionality
+**優先順位**: 環境変数 > .github_token > ~/.config/vscode-templates/token
 
-## When Modifying
+**方法1: 外部ファイル（推奨）**
+```bash
+# プロジェクトローカル
+echo 'github_pat_xxxxx' > .github_token
+chmod 600 .github_token
 
-- **Adding template support**: Edit configuration section (lines 20-91), main logic rarely needs changes
-- **Testing is mandatory**: Run BATS tests after any changes to mapping logic
-- **Preserve backward compatibility**: Default mappings should work for existing templates
+# グローバル設定
+mkdir -p ~/.config/vscode-templates
+echo 'github_pat_xxxxx' > ~/.config/vscode-templates/token
+chmod 600 ~/.config/vscode-templates/token
+```
+
+**方法2: 環境変数**
+```bash
+export GITHUB_TOKEN="github_pat_xxxxx"
+```
+
+## よくある落とし穴
+
+1. **大文字小文字の区別**: テンプレート名は大文字小文字を区別しますが、変数検索時は大文字に変換されます（`python` → `PYTHON_FOLDER_MAPPING`）
+2. **マッピングの優先順位**: ファイルマッピングは特定ファイルについてフォルダマッピングを上書き
+3. **複数テンプレート**: 順序が重要 - 後から指定したテンプレートが優先
+4. **Bashバージョン**: 連想配列のためにBash 4+が必要（`bash --version`で確認）
+5. **JSONマージにはjqが必要**: マージ機能のために`brew install jq`または`apt-get install jq`でインストール
+6. **テンプレートディレクトリオプション**: `-d`または`--template-dir`で代替ディレクトリを指定可能（テスト用に便利）
+
+## 変更時の注意
+
+- **テンプレートサポートの追加**: 設定セクション（20-91行目）を編集、メインロジックはほとんど変更不要
+- **テストは必須**: マッピングロジックへの変更後はテストを実行
+- **後方互換性の維持**: デフォルトマッピングは既存テンプレートで動作する必要がある
+- **ドキュメント更新**: 新機能追加時はREADME.mdとこのファイルを更新
+
+## プロジェクト構造の変更履歴
+
+- 2026年2月1日: `templete/` → `templates/`にリネーム（正しいスペル）
+- 2026年2月1日: `test-templete/` → `templates/test/`に移動（論理的な配置）
+- 2026年2月1日: ドキュメントを`docs/`ディレクトリに集約
