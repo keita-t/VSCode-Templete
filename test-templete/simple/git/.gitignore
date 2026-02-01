@@ -1,0 +1,4 @@
+# Test Template .gitignore
+*.test
+*.tmp
+test-output/

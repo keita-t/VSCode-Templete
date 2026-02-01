@@ -1,0 +1,7 @@
+{
+  "editor.formatOnSave": true,
+  "advancedTemplate": true,
+  "files.exclude": {
+    "**/.git": true
+  }
+}
