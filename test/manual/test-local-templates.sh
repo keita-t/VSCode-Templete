@@ -11,10 +11,13 @@
 # 【前提条件】
 # - templates/testディレクトリがローカルに存在すること
 # - Python 3.7+ がインストールされていること
-# - pyyaml, tomli, tomli-w がインストールされていること
+# - 必要なパッケージは自動でインストールされます（.venv環境）
 # ============================================================================
 
 set -e
+
+# 依存パッケージの自動インストールを有効化（テスト用）
+export AUTO_INSTALL_DEPS="yes"
 
 # スクリプトのルートディレクトリに移動
 SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -106,7 +109,7 @@ TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_1="${TEST_DIR}/test1-simple"
 run_test "1" "simple テンプレート配置" "${TEST_DIR_1}"
 
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
+(cd "${TEST_DIR_1}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple)
 
 if verify_file_exists "${TEST_DIR_1}/.vscode/settings.json" && \
    verify_file_exists "${TEST_DIR_1}/.gitignore" && \
@@ -127,7 +130,7 @@ TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_2="${TEST_DIR}/test2-advanced"
 run_test "2" "advanced テンプレート配置" "${TEST_DIR_2}"
 
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test advanced
+(cd "${TEST_DIR_2}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test advanced)
 
 if verify_file_exists "${TEST_DIR_2}/.vscode/settings.json" && \
    verify_file_content "${TEST_DIR_2}/.vscode/settings.json" '"editor.fontSize": 16'; then
@@ -146,7 +149,7 @@ TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_3="${TEST_DIR}/test3-multiple"
 run_test "3" "複数テンプレート（simple → advanced）" "${TEST_DIR_3}"
 
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple advanced
+(cd "${TEST_DIR_3}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple advanced)
 
 # 後から適用したadvancedの値（16）が優先されるべき
 if verify_file_exists "${TEST_DIR_3}/.vscode/settings.json" && \
@@ -166,7 +169,7 @@ TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_4="${TEST_DIR}/test4-fresh"
 run_test "4" "クリーンプロジェクトへの適用" "${TEST_DIR_4}"
 
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
+(cd "${TEST_DIR_4}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple)
 
 if verify_file_exists "${TEST_DIR_4}/.vscode/settings.json" && \
    verify_file_exists "${TEST_DIR_4}/.gitignore"; then
@@ -185,7 +188,7 @@ TOTAL_TESTS=$((TOTAL_TESTS + 1))
 TEST_DIR_5="${TEST_DIR}/test5-structure"
 run_test "5" "ディレクトリ構造の確認" "${TEST_DIR_5}"
 
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple
+(cd "${TEST_DIR_5}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test simple)
 
 # .vscodeディレクトリが正しく作成されているか
 if [ -d "${TEST_DIR_5}/.vscode" ] && \
@@ -220,7 +223,7 @@ cat "${TEST_DIR_6}/.vscode/settings.json"
 echo ""
 
 # テンプレートを適用（マージが発生するはず）
-python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-json
+(cd "${TEST_DIR_6}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-json)
 
 echo "マージ後のsettings.json:"
 cat "${TEST_DIR_6}/.vscode/settings.json"
@@ -262,7 +265,7 @@ EOF
     echo ""
 
     # テンプレートを適用（マージが発生するはず）
-    python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-yaml
+    (cd "${TEST_DIR_7}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-yaml)
 
     echo "マージ後のdocker-compose.yml:"
     cat "${TEST_DIR_7}/docker-compose.yml"
@@ -310,7 +313,7 @@ EOF
     # テンプレートを適用（マージが発生するはず）
     # set -e を一時的に無効化（マージ失敗時もテストを継続）
     set +e
-    python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-toml
+    (cd "${TEST_DIR_8}" && python3 "${SETUP_SCRIPT}" -l "${TEST_TEMPLATE_DIR}" -d test merge-toml)
     set -e
 
     echo "マージ後のpyproject.toml:"
