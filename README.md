@@ -308,12 +308,6 @@ Docker基本設定
 独自のテンプレートを `templates/` 配下に作成できます。
 階層化もサポートしています（例: `myproject/dev`, `myproject/prod`）
 
-## 🤝 貢献
-
-1. このリポジトリをFork
-2. `templates/` 配下に新しいテンプレートを追加
-3. Pull Requestを作成
-
 ## 🧪 テスト
 
 ### ローカルテスト（オフライン）

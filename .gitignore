@@ -1,4 +1,287 @@
-# Test Template .gitignore
-*.test
+# ============================================================================
+# 汎用 .gitignore テンプレート
+# ============================================================================
+# OS、エディタ、IDE、一般的な開発環境の共通除外設定
+# 各プロジェクトで言語固有の設定を追加してください
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# OS生成ファイル
+# ----------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ----------------------------------------------------------------------------
+# エディタ・IDE
+# ----------------------------------------------------------------------------
+
+# Visual Studio Code
+.vscode/*
+!.vscode/tasks.json
+*.code-workspace
+.history/
+*.vsix
+
+# JetBrains IDEs (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ----------------------------------------------------------------------------
+# バージョン管理・バックアップ
+# ----------------------------------------------------------------------------
+
+# Git
+*.orig
+*.rej
+*.patch
+
+# バックアップファイル
+*.bak
+*.backup
 *.tmp
-test-output/
+*.temp
+*.swp
+*.swo
+
+# ----------------------------------------------------------------------------
+# ログ・デバッグ
+# ----------------------------------------------------------------------------
+
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ----------------------------------------------------------------------------
+# 一時ファイル・キャッシュ
+# ----------------------------------------------------------------------------
+
+*.cache
+.cache/
+.temp/
+.tmp/
+temp/
+tmp/
+
+# ----------------------------------------------------------------------------
+# 環境変数・機密情報
+# ----------------------------------------------------------------------------
+
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.cert
+*.p12
+secrets.*
+
+# ----------------------------------------------------------------------------
+# ビルド成果物・依存関係
+# ----------------------------------------------------------------------------
+
+dist/
+build/
+out/
+target/
+node_modules/
+bower_components/
+vendor/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+*.egg
+.Python
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+MANIFEST
+
+# ----------------------------------------------------------------------------
+# 仮想環境
+# ----------------------------------------------------------------------------
+
+# Python
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Node.js
+node_modules/
+
+# ----------------------------------------------------------------------------
+# テスト・カバレッジ
+# ----------------------------------------------------------------------------
+
+coverage/
+*.cover
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.py,cover
+.hypothesis/
+.nyc_output/
+
+# ----------------------------------------------------------------------------
+# Python開発ツール
+# ----------------------------------------------------------------------------
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython
+cython_debug/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs
+/site
+
+# ----------------------------------------------------------------------------
+# その他
+# ----------------------------------------------------------------------------
+
+# コンパイル済みファイル
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# 圧縮ファイル
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
