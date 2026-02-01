@@ -1,22 +1,23 @@
 #!/bin/bash
 
 # ============================================================================
-# --template-dir オプションの統合テスト
+# GitHubダウンロード統合テスト
 # ============================================================================
-# test-templeteディレクトリを使用してスクリプト全体の動作をテストします
+# 実際にGitHubからテンプレートをダウンロードしてテストします
 #
 # 【目的】
+# - GitHub API経由でのファイル取得確認
 # - --template-dir オプションの動作確認
-# - test-templeteからのファイル取得・配置確認
-# - 複数テンプレートの組み合わせテスト
-# - エンドツーエンドでの動作検証
+# - 認証（GitHub Token）の動作確認
+# - エンドツーエンドでの統合テスト
 #
 # 【実行方法】
-# ./test/manual/test-template-dir-option.sh
+# ./test/manual/test-github-download.sh
 #
 # 【前提条件】
-# - GITHUB_TOKEN環境変数が設定されている（プライベートリポジトリの場合）
+# - GitHub tokenが設定されている（環境変数、.github_token、または~/.config/vscode-templates/token）
 # - test-templeteディレクトリがGitHubにpushされている
+# - インターネット接続が利用可能
 # ============================================================================
 
 set -e
@@ -32,11 +33,12 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 SCRIPT_PATH="${SCRIPT_DIR}/vscode-project-startup.sh"
-TEST_DIR="/tmp/template-dir-test-$(date +%s)"
+TEST_DIR="/tmp/github-download-test-$(date +%s)"
 
-echo -e "${BLUE}================================${NC}"
-echo -e "${BLUE}--template-dir オプション統合テスト${NC}"
-echo -e "${BLUE}================================${NC}"
+echo -e "${BLUE}================================================================================${NC}"
+echo -e "${BLUE}GitHubダウンロード統合テスト${NC}"
+echo -e "${BLUE}（GitHub API経由でのファイル取得）${NC}"
+echo -e "${BLUE}================================================================================${NC}"
 echo ""
 
 # GitHub Token チェック（メインスクリプトがトークンを読み込むので、警告のみ）
@@ -256,23 +258,17 @@ if [ $FAILED_TESTS -gt 0 ]; then
 fi
 echo ""
 
-echo -e "${YELLOW}テストディレクトリ: ${TEST_DIR}${NC}"
-echo -e "${YELLOW}確認コマンド: ls -la ${TEST_DIR}/*/＊${NC}"
-echo ""
-
-# クリーンアップオプション
-echo -e "${YELLOW}テストディレクトリを削除しますか？ [y/N]${NC}"
-read -r response
-if [[ "$response" =~ ^[Yy]$ ]]; then
+# クリーンアップ（失敗時は保持）
+if [ ${FAILED_TESTS} -eq 0 ]; then
     rm -rf "${TEST_DIR}"
-    echo -e "${GREEN}✓ テストディレクトリを削除しました${NC}"
-else
-    echo -e "${YELLOW}テストディレクトリを保持します: ${TEST_DIR}${NC}"
-fi
-
-# 終了コード
-if [ $FAILED_TESTS -gt 0 ]; then
-    exit 1
-else
+    echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
+    echo -e "${GREEN}✓ テストディレクトリを自動削除しました${NC}"
     exit 0
+else
+    echo -e "${RED}✗ ${FAILED_TESTS} 個のテストが失敗しました${NC}"
+    echo ""
+    echo -e "${YELLOW}テストディレクトリを保持（デバッグ用）: ${TEST_DIR}${NC}"
+    echo "確認コマンド: ls -la ${TEST_DIR}/*/"
+    echo "削除コマンド: rm -rf ${TEST_DIR}"
+    exit 1
 fi

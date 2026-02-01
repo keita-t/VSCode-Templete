@@ -6,44 +6,91 @@
 
 ```
 test/
-├── README.md                                # このファイル
+├── README.md                        # このファイル
 └── manual/
-    └── test-template-dir-option.sh         # 統合テスト（5つのテストケース）
+    ├── test-local-templates.sh     # ローカルテスト（GitHubアクセス不要）
+    └── test-github-download.sh     # GitHubダウンロード統合テスト
 ```
 
-## 統合テストの概要
+## テストの種類
 
-**ファイル**: `manual/test-template-dir-option.sh`
+### 1. ローカルテスト（推奨）
 
-**目的**: スクリプト全体の動作をエンドツーエンドで検証
+**ファイル**: `manual/test-local-templates.sh`
+
+**目的**: ローカルの`test-templete`を使用して高速にテスト（GitHubアクセス不要）
 
 **テストケース**:
 
-1. **デフォルト動作テスト**: デフォルトの`templete/`ディレクトリからbase templateを適用
-2. **カスタムディレクトリテスト（短縮形）**: `-d test-templete simple`オプションでsimple templateを適用
-3. **カスタムディレクトリテスト（完全形）**: `--template-dir test-templete advanced`オプションでadvanced templateを適用
-4. **複数テンプレートテスト**: `test-templete/simple`と`test-templete/advanced`を順番に適用
-5. **JSONマージ＆バックアップテスト**: 既存のJSONファイルとのマージ動作とバックアップファイル作成を確認
+1. **simple テンプレート配置**: ローカルファイルを直接配置
+2. **advanced テンプレート配置**: 異なる設定値の確認
+3. **複数テンプレート適用**: simple → advanced の上書き順序
+4. **JSONマージ**: 既存ファイルとのマージとバックアップ
+5. **ディレクトリ構造検証**: 完全な構造の確認
 
 **カバー範囲**:
-- ✅ GitHubからのテンプレートダウンロード
-- ✅ ファイル配置（vscode/、git/、config/）
-- ✅ JSONマージ機能
+- ✅ ファイル配置ロジック（vscode/、git/、config/）
+- ✅ JSONマージ機能（jq使用時）
 - ✅ バックアップファイル作成
-- ✅ カスタムテンプレートディレクトリ（--template-dir/-d オプション）
 - ✅ 複数テンプレートの適用順序
+- ✅ ディレクトリ構造の正確性
+
+**利点**:
+- 🚀 高速（GitHubアクセス不要）
+- 💻 オフライン実行可能
+- 🔧 開発中の頻繁なテストに最適
+
+### 2. GitHubダウンロード統合テスト
+
+**ファイル**: `manual/test-github-download.sh`
+
+**目的**: GitHub APIを使用した実際のダウンロードをテスト
+
+**テストケース**:
+
+1. **デフォルト動作**: `templete/base`からダウンロード
+2. **カスタムディレクトリ（短縮形）**: `-d test-templete simple`
+3. **カスタムディレクトリ（完全形）**: `--template-dir test-templete advanced`
+4. **複数テンプレート**: `test-templete/simple`と`advanced`を順番に適用
+5. **JSONマージ＆バックアップ**: 既存ファイルとのマージ
+
+**カバー範囲**:
+- ✅ GitHub API経由でのファイル取得
+- ✅ 認証（GitHub Token）の動作
+- ✅ --template-dir オプション
 - ✅ エラーハンドリング
+- ✅ エンドツーエンド統合
 
 ## 実行方法
 
-### 前提条件
+### ローカルテスト（推奨、GitHubアクセス不要）
+
+#### 前提条件
+- `test-templete`ディレクトリがローカルに存在
+- `jq`（オプション、JSONマージテスト用）
+
+#### 実行
+```bash
+cd /home/keita/Project/vs_code/VSCode-Templete
+./test/manual/test-local-templates.sh
+```
+
+#### VS Codeから実行
+1. Ctrl+Shift+P（Cmd+Shift+P on Mac）でコマンドパレットを開く
+2. "Tasks: Run Test Task"を選択
+3. "Run Local Tests"を選択（デフォルト）
+
+### GitHub統合テスト（GitHub Token必要）
+
+#### 前提条件
 
 - **GITHUB_TOKEN**: プライベートリポジトリへのアクセスに必要（環境変数、`.github_token`ファイル、または`~/.config/vscode-templates/token`で設定）
 - **curl**: GitHubからのファイルダウンロードに使用
 - **jq**: JSONマージに使用（オプション、ないとマージが単純上書きになります）
 - **bash**: 4.0以上（連想配列を使用）
+- **インターネット接続**
 
-### トークンの設定
+#### トークンの設定
 
 **方法1: 外部ファイル（推奨）**
 ```bash
@@ -62,18 +109,17 @@ chmod 600 ~/.config/vscode-templates/token
 export GITHUB_TOKEN="your_github_personal_access_token"
 ```
 
-### テストの実行
+#### 実行
 
-#### 全テストを実行（推奨）
 ```bash
 cd /home/keita/Project/vs_code/VSCode-Templete
-./test/manual/test-template-dir-option.sh
+./test/manual/test-github-download.sh
 ```
 
 #### VS Codeから実行
 1. Ctrl+Shift+P（Cmd+Shift+P on Mac）でコマンドパレットを開く
-2. "Tasks: Run Test Task"を選択
-3. "Run Integration Tests"を選択
+2. "Tasks: Run Task"を選択
+3. "Run GitHub Tests"を選択
 
 ### 出力例
 

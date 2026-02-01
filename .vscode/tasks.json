@@ -2,21 +2,39 @@
   // ============================================================================
   // VS Code タスク設定
   // ============================================================================
-  // 統合テストを実行するタスクを定義します
+  // テストを実行するタスクを定義します
+  //
+  // 【ローカルテスト】
+  //   - Run Local Tests: ローカルテスト（デフォルト、GitHubアクセス不要）
   //
   // 【統合テスト】
-  //   - Run Integration Tests: 統合テスト実行（デフォルト）
+  //   - Run GitHub Tests: GitHubダウンロード統合テスト（トークン必要）
   // ============================================================================
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Integration Tests",
+      "label": "Run Local Tests",
       "type": "shell",
-      "command": "./test/manual/test-template-dir-option.sh",
+      "command": "./test/manual/test-local-templates.sh",
       "group": {
         "kind": "test",
         "isDefault": true
       },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run GitHub Tests",
+      "type": "shell",
+      "command": "./test/manual/test-github-download.sh",
+      "group": "test",
       "presentation": {
         "echo": true,
         "reveal": "always",
