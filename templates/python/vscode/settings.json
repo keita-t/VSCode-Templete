@@ -2,40 +2,21 @@
   // ============================================================================
   // Python開発環境用 VSCode設定
   // ============================================================================
-  // Base設定 + Python特有の設定
+  // base設定とマージして使用することを前提としています
+  // Python固有の設定のみを定義
+  // 
+  // 使用例: ./vscode-project-startup.sh base python
   // ============================================================================
 
   // --------------------------------------------------------------------------
-  // エディタ基本設定（Base設定）
+  // エディタ設定（Python固有のオーバーライド）
   // --------------------------------------------------------------------------
-  "editor.fontSize": 14,
   "editor.tabSize": 4,  // Python推奨: 4スペース
-  "editor.insertSpaces": true,
-  "editor.detectIndentation": true,
-  "editor.wordWrap": "on",
   "editor.rulers": [79, 120],  // PEP 8推奨: 79文字
-  "editor.minimap.enabled": true,
-  "editor.minimap.maxColumn": 120,
-  "editor.lineNumbers": "on",
-  "editor.renderWhitespace": "boundary",
-  "editor.cursorBlinking": "smooth",
-  "editor.cursorSmoothCaretAnimation": "on",
-  "editor.smoothScrolling": true,
-  "editor.mouseWheelZoom": true,
 
   // --------------------------------------------------------------------------
-  // フォーマット（Base設定 + Python設定）
-  // --------------------------------------------------------------------------
-  "editor.formatOnSave": true,
-  "editor.formatOnPaste": false,
-  "editor.formatOnType": false,
-  "editor.defaultFormatter": null,
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit"
-  },
-
   // Python専用フォーマッター
+  // --------------------------------------------------------------------------
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
@@ -45,54 +26,16 @@
   },
 
   // --------------------------------------------------------------------------
-  // ファイル管理（Base設定）
+  // 除外設定（Python固有の追加）
   // --------------------------------------------------------------------------
-  "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 1000,
-  "files.encoding": "utf8",
-  "files.eol": "\n",
-  "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true,
-  "files.trimFinalNewlines": true,
-  
-  // 除外設定（Base + Python）
   "files.exclude": {
-    "**/.git": true,
-    "**/.svn": true,
-    "**/.hg": true,
-    "**/CVS": true,
-    "**/.DS_Store": true,
-    "**/Thumbs.db": true,
-    "**/__pycache__": true,
-    "**/.pytest_cache": true,
-    "**/node_modules": true,
-    "**/.venv": true,
-    "**/venv": true,
-    "**/*.pyc": true,
-    "**/.coverage": true,
-    "**/coverage": true,
-    "**/.next": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/.cache": true,
     "**/.mypy_cache": true,
     "**/.tox": true,
     "**/.nox": true,
     "**/*.egg-info": true
   },
 
-  // 検索除外（Base + Python）
   "search.exclude": {
-    "**/node_modules": true,
-    "**/bower_components": true,
-    "**/*.code-search": true,
-    "**/dist": true,
-    "**/build": true,
-    "**/.venv": true,
-    "**/venv": true,
-    "**/__pycache__": true,
-    "**/.git": true,
-    "**/coverage": true,
     "**/.mypy_cache": true,
     "**/.pytest_cache": true,
     "**/*.egg-info": true
@@ -100,53 +43,11 @@
 
   // ファイルウォッチ除外（Python最適化）
   "files.watcherExclude": {
-    "**/node_modules/*": true,
-    "**/build/*": true,
     "**/.venv/*": true,
     "**/venv/*": true,
     "**/__pycache__/*": true,
     "**/.pytest_cache/*": true
   },
-
-  // --------------------------------------------------------------------------
-  // ワークベンチ（Base設定）
-  // --------------------------------------------------------------------------
-  "workbench.startupEditor": "welcomePage",
-  "workbench.colorTheme": "Default Dark+",
-  "workbench.iconTheme": "vs-seti",
-  "workbench.editor.enablePreview": false,
-  "workbench.editor.limit.enabled": true,
-  "workbench.editor.limit.value": 10,
-  "workbench.editor.limit.perEditorGroup": true,
-  
-  // --------------------------------------------------------------------------
-  // ターミナル（Base設定）
-  // --------------------------------------------------------------------------
-  "terminal.integrated.fontSize": 13,
-  "terminal.integrated.cursorBlinking": true,
-  "terminal.integrated.cursorStyle": "line",
-  "terminal.integrated.scrollback": 10000,
-
-  // --------------------------------------------------------------------------
-  // Git統合（Base設定）
-  // --------------------------------------------------------------------------
-  "git.enabled": true,
-  "git.autofetch": true,
-  "git.confirmSync": false,
-  "git.enableSmartCommit": true,
-  "git.ignoreMissingGitWarning": false,
-  "git.openRepositoryInParentFolders": "always",
-
-  // --------------------------------------------------------------------------
-  // その他（Base設定）
-  // --------------------------------------------------------------------------
-  "explorer.confirmDelete": true,
-  "explorer.confirmDragAndDrop": true,
-  "breadcrumbs.enabled": true,
-  "telemetry.telemetryLevel": "off",
-  "update.mode": "default",
-  "extensions.autoUpdate": true,
-  "security.workspace.trust.enabled": true,
 
   // ============================================================================
   // Python特有の設定
