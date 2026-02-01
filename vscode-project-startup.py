@@ -58,90 +58,64 @@ class Colors:
 
 class Config:
     """設定管理クラス"""
-    
+
     def __init__(self, config_path: Optional[Path] = None):
         """
         設定を読み込む
-        
+
         Args:
             config_path: 設定ファイルのパス（指定しない場合はデフォルトを使用）
         """
         self.config_path = config_path or Path(__file__).parent / "config.json"
         self._config = self._load_config()
-    
+
     def _load_config(self) -> dict:
-        """設定ファイルを読み込む（存在しない場合はデフォルト値を返す）"""
-        if self.config_path.exists():
-            try:
-                with self.config_path.open('r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception as e:
-                print_error(f"設定ファイル読み込みエラー: {e}")
-                return self._default_config()
-        else:
-            return self._default_config()
-    
-    def _default_config(self) -> dict:
-        """デフォルト設定を返す"""
-        return {
-            "github": {
-                "user": "keita-t",
-                "repo": "VSCode-Templete",
-                "branch": "main"
-            },
-            "folder_mapping": {
-                "vscode": ".vscode",
-                "snippets": ".vscode",
-                "git": ".",
-                "config": ".",
-                "docker": "."
-            },
-            "file_mapping": {
-                ".gitignore": ".",
-                ".dockerignore": ".",
-                ".editorconfig": "."
-            },
-            "merge_patterns": [
-                "*.json",
-                "*.code-snippets",
-                "*.yaml",
-                "*.yml",
-                "*.toml",
-                "*.xml"
-            ],
-            "templates": {}
-        }
-    
+        """設定ファイルを読み込む"""
+        if not self.config_path.exists():
+            print_error(f"設定ファイルが見つかりません: {self.config_path}")
+            print_error("config.json を作成してください。")
+            sys.exit(1)
+        
+        try:
+            with self.config_path.open('r', encoding='utf-8') as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            print_error(f"設定ファイルのJSON形式が不正です: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print_error(f"設定ファイル読み込みエラー: {e}")
+            sys.exit(1)
+
     @property
     def github_user(self) -> str:
-        return self._config.get("github", {}).get("user", "keita-t")
-    
+        return self._config["github"]["user"]
+
     @property
     def repo_name(self) -> str:
-        return self._config.get("github", {}).get("repo", "VSCode-Templete")
-    
+        return self._config["github"]["repo"]
+
     @property
     def branch(self) -> str:
-        return self._config.get("github", {}).get("branch", "main")
-    
+        return self._config["github"]["branch"]
+
     @property
     def folder_mapping(self) -> Dict[str, str]:
-        return self._config.get("folder_mapping", {})
-    
+        return self._config["folder_mapping"]
+
     @property
     def file_mapping(self) -> Dict[str, str]:
-        return self._config.get("file_mapping", {})
-    
+        return self._config["file_mapping"]
+
     @property
     def merge_patterns(self) -> List[str]:
-        return self._config.get("merge_patterns", [])
-    
+        return self._config["merge_patterns"]
+
     def get_template_folder_mapping(self, template_name: str) -> Dict[str, str]:
         """テンプレート固有のフォルダマッピングを取得"""
         templates = self._config.get("templates", {})
         template_config = templates.get(template_name, {})
         return template_config.get("folder_mapping", {})
-    
+
     def get_template_file_mapping(self, template_name: str) -> Dict[str, str]:
         """テンプレート固有のファイルマッピングを取得"""
         templates = self._config.get("templates", {})
@@ -380,7 +354,7 @@ class TemplateSource:
         """ローカルファイルをリスト"""
         if not self.local_path:
             return []
-        
+
         full_path = self.local_path / base_path
         if not full_path.exists():
             return []
@@ -466,7 +440,7 @@ class TemplateSetup:
             # Configから設定を取得（デフォルト + テンプレート固有）
             folder_mapping = self.config.folder_mapping.copy()
             folder_mapping.update(self.config.get_template_folder_mapping(template_name))
-            
+
             file_mapping = self.config.file_mapping.copy()
             file_mapping.update(self.config.get_template_file_mapping(template_name))
 
