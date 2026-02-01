@@ -312,7 +312,7 @@ if [ ${FAILED_TESTS} -eq 0 ]; then
     OLD_DIRS=$(find /tmp -maxdepth 1 -type d -name "local-template-test-*" 2>/dev/null)
     if [ -n "${OLD_DIRS}" ]; then
         echo "${OLD_DIRS}" | xargs rm -rf
-        echo -e "${GREEN}✓ 過去のテスト残骸も削除しました${NC}"
+        echo -e "${GREEN}✓ /tmpフォルダをクリーンアップしました${NC}"
     fi
     
     echo -e "${GREEN}✓ すべてのテストが成功しました！${NC}"
