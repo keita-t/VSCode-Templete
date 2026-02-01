@@ -41,8 +41,8 @@ REPO_NAME="VSCode-Templete"         # リポジトリ名
 BRANCH="main"                       # ブランチ名（mainまたはmaster）
 
 # --- 認証設定（プライベートリポジトリの場合に必要） ---
-# GitHub Personal Access Token（環境変数GITHUB_TOKENから自動取得）
-# トークンが設定されていない場合は公開リポジトリとしてアクセス
+# GitHub Personal Access Token
+# 優先順位: 環境変数 > .github_token > ~/.config/vscode-templates/token
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
 # --- デフォルト設定（全テンプレート共通） ---
@@ -91,6 +91,55 @@ declare -A PYTHON_FILE_MAPPING=(
 # ----------------------------------------------------------------------------
 # ヘルパー関数
 # ----------------------------------------------------------------------------
+
+# GitHubトークンを外部ファイルから読み込む
+# 優先順位:
+#   1. 環境変数 GITHUB_TOKEN（最優先）
+#   2. プロジェクトローカル .github_token
+#   3. ユーザーホーム ~/.config/vscode-templates/token
+load_github_token() {
+    # 環境変数が既に設定されている場合はそれを使用
+    if [[ -n "$GITHUB_TOKEN" ]]; then
+        return 0
+    fi
+
+    # プロジェクトローカルのトークンファイルをチェック
+    local project_token=".github_token"
+    if [[ -f "$project_token" && -r "$project_token" ]]; then
+        # ファイルパーミッションの警告（600または400以外）
+        local perms
+        perms=$(stat -c '%a' "$project_token" 2>/dev/null || stat -f '%A' "$project_token" 2>/dev/null)
+        if [[ "$perms" != "600" && "$perms" != "400" ]]; then
+            echo -e "${YELLOW}Warning: $project_token has insecure permissions ($perms). Consider: chmod 600 $project_token${NC}" >&2
+        fi
+        
+        # コメント行（#で始まる）と空行を除外して、最初の有効な行を取得
+        GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "$project_token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
+        if [[ -n "$GITHUB_TOKEN" ]]; then
+            return 0
+        fi
+    fi
+
+    # ユーザーホームのグローバル設定をチェック
+    local global_token="$HOME/.config/vscode-templates/token"
+    if [[ -f "$global_token" && -r "$global_token" ]]; then
+        # ファイルパーミッションの警告
+        local perms
+        perms=$(stat -c '%a' "$global_token" 2>/dev/null || stat -f '%A' "$global_token" 2>/dev/null)
+        if [[ "$perms" != "600" && "$perms" != "400" ]]; then
+            echo -e "${YELLOW}Warning: $global_token has insecure permissions ($perms). Consider: chmod 600 $global_token${NC}" >&2
+        fi
+        
+        # コメント行（#で始まる）と空行を除外して、最初の有効な行を取得
+        GITHUB_TOKEN=$(grep -v '^[[:space:]]*#' "$global_token" | grep -v '^[[:space:]]*$' | head -1 | tr -d '[:space:]')
+        if [[ -n "$GITHUB_TOKEN" ]]; then
+            return 0
+        fi
+    fi
+
+    # トークンが見つからない場合は空のまま（公開リポジトリ用）
+    return 0
+}
 
 # マージ設定を取得
 # DEFAULT_MERGE_SETTINGを返す（全テンプレート共通）
@@ -185,7 +234,7 @@ get_file_destination() {
 get_template_files() {
     local template_type="$1"
     local subfolder="$2"
-    local api_url="https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/templete/${template_type}/${subfolder}?ref=${BRANCH}"
+    local api_url="https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/${TEMPLATE_DIR}/${template_type}/${subfolder}?ref=${BRANCH}"
 
     # GitHub APIでファイルリストを取得
     local response
@@ -197,12 +246,12 @@ get_template_files() {
 
     # ファイル名を抽出
     local files
-    files=$(echo "${response}" | grep -o '"name":"[^"]*"' | cut -d'"' -f4)
+    files=$(echo "${response}" | grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/')
 
     # ファイルパスの配列を追加
     while IFS= read -r filename; do
         if [ -n "$filename" ]; then
-            ALL_FILES+=("templete/${template_type}/${subfolder}/${filename}")
+            ALL_FILES+=("${TEMPLATE_DIR}/${template_type}/${subfolder}/${filename}")
             ALL_FILE_DESTINATIONS+=("${subfolder}")
             ALL_FILE_TEMPLATES+=("${template_type}")
         fi
@@ -211,53 +260,60 @@ get_template_files() {
 
 # 使用方法を表示
 usage() {
-    echo -e "${BLUE}使用方法:${NC}"
-    echo "  $0 <template_folder_name> [<template_folder_name2> ...]"
+    echo "使用方法: $0 [options] <template_name> [<template_name2> ...]"
     echo ""
-    echo -e "${BLUE}テンプレートフォルダ名:${NC}"
-    echo "  - GitHubリポジトリの templete/ 直下にあるフォルダ名を指定します"
-    echo "  - 任意のフォルダ名でテンプレートを作成・使用できます"
-    echo "  - 複数指定した場合、順番に適用されます（後の設定が優先）"
+    echo "オプション:"
+    echo "  -d, --template-dir <dir>  テンプレートディレクトリを指定 (デフォルト: templete)"
     echo ""
-    echo -e "${BLUE}例:${NC}"
-    echo "  単一テンプレート:"
-    echo "    $0 python"
+    echo "例:"
+    echo "  $0 base          # 基本設定"
+    echo "  $0 base python   # 基本 + Python"
+    echo "  $0 -d test-templete base  # test-templeteディレクトリから取得"
     echo ""
-    echo "  複数テンプレート（組み合わせ）:"
-    echo "    $0 python docker        # Python環境 + Docker設定"
-    echo "    $0 react-native ios     # React Native + iOS固有設定"
-    echo "    $0 base-config my-team  # 基本設定 + チーム固有設定"
-    echo ""
-    echo -e "${BLUE}仕組み:${NC}"
-    echo "  1. 指定したフォルダ内のファイルをGitHubからダウンロード"
-    echo "  2. デフォルト設定（vscode→.vscode, git→. など）で自動配置"
-    echo "  3. カスタム設定がある場合は、それを優先して適用"
-    echo "  4. 複数テンプレートの場合、後から指定したものが優先"
-    echo ""
-    echo -e "${BLUE}テンプレートの作成手順:${NC}"
-    echo "  1. GitHubリポジトリに templete/<好きな名前>/ フォルダを作成"
-    echo "  2. その中に vscode/, git/, config/ などのサブフォルダを作成"
-    echo "  3. 必要なファイルを配置（settings.json, .gitignore など）"
-    echo "  4. このスクリプトで指定して実行"
-    echo ""
-    echo -e "${BLUE}カスタム設定（オプション）:${NC}"
-    echo "  デフォルトと異なる配置が必要な場合、スクリプト内に設定を追加:"
-    echo "    declare -A MY_TEMPLATE_FOLDER_MAPPING=([\"特殊フォルダ\"]=\"配置先\")"
-    echo "    declare -A MY_TEMPLATE_FILE_MAPPING=([\"特殊ファイル\"]=\"配置先\")"    echo ""
-    echo -e "${BLUE}プライベートリポジトリの場合:${NC}"
-    echo "  環境変数GITHUB_TOKENにPersonal Access Tokenを設定してください:"
-    echo "    export GITHUB_TOKEN='your_token_here'"
-    echo "    $0 python"
-    echo "  トークンの作成: GitHub Settings → Developer settings → Personal access tokens"
-    echo "  必要な権限: repo (Full control of private repositories)"    exit 1
+    echo "プライベートリポジトリの場合:"
+    echo "  export GITHUB_TOKEN='token' してから実行"
+    echo "  詳細: README.md を参照"
+    exit 1
 }
 
 # ----------------------------------------------------------------------------
 # メイン処理
 # ----------------------------------------------------------------------------
 
+# GitHubトークンの読み込み（環境変数、プロジェクトローカル、グローバル設定の順に試行）
+load_github_token
+
+# デフォルトのテンプレートディレクトリ
+TEMPLATE_DIR="templete"
+
+# 引数解析
+TEMPLATE_TYPES=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -d|--template-dir)
+            if [ -z "$2" ]; then
+                echo -e "${RED}エラー: --template-dir に値が必要です${NC}"
+                exit 1
+            fi
+            TEMPLATE_DIR="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        -*)
+            echo -e "${RED}エラー: 不明なオプション: $1${NC}"
+            usage
+            ;;
+        *)
+            TEMPLATE_TYPES+=("$1")
+            shift
+            ;;
+    esac
+done
+
 # 引数チェック
-if [ $# -eq 0 ]; then
+if [ ${#TEMPLATE_TYPES[@]} -eq 0 ]; then
     echo -e "${RED}エラー: テンプレートを1つ以上指定してください${NC}"
     echo ""
     usage
@@ -267,13 +323,11 @@ fi
 BASE_URL="https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/${BRANCH}"
 PROJECT_DIR=$(pwd)
 
-# 全テンプレート名を配列に格納
-TEMPLATE_TYPES=("$@")
-
 # --- セットアップ開始 ---
 
 echo -e "${GREEN}プロジェクトテンプレート セットアップ${NC}"
 echo "適用テンプレート: ${TEMPLATE_TYPES[*]}"
+echo "テンプレートディレクトリ: ${TEMPLATE_DIR}"
 echo "対象ディレクトリ: ${PROJECT_DIR}"
 echo ""
 
@@ -283,8 +337,6 @@ declare -a ALL_FILE_DESTINATIONS=()
 declare -a ALL_FILE_TEMPLATES=()
 
 for TEMPLATE_TYPE in "${TEMPLATE_TYPES[@]}"; do
-    echo -e "${YELLOW}テンプレート '${TEMPLATE_TYPE}' を処理中...${NC}"
-
     # テンプレートマッピングを検証
     MAPPING_LIST=$(get_template_folder_mapping "${TEMPLATE_TYPE}")
     if [ -z "$MAPPING_LIST" ]; then
@@ -294,7 +346,6 @@ for TEMPLATE_TYPE in "${TEMPLATE_TYPES[@]}"; do
 
     # このテンプレートのファイルリストを取得
     while IFS=: read -r subfolder dest_dir; do
-        echo "  ${subfolder}/ を検索中..."
         get_template_files "${TEMPLATE_TYPE}" "${subfolder}"
     done <<< "$MAPPING_LIST"
 done
@@ -315,11 +366,9 @@ fi
 
 # 一時ディレクトリを作成
 TEMP_DIR=$(mktemp -d)
-echo -e "${YELLOW}一時ディレクトリを作成: ${TEMP_DIR}${NC}"
 
 # クリーンアップ関数
 cleanup() {
-    echo -e "${YELLOW}一時ファイルをクリーンアップ中...${NC}"
     rm -rf "${TEMP_DIR}"
 }
 
@@ -329,64 +378,44 @@ trap cleanup EXIT
 # --- ファイルダウンロード ---
 
 # ファイルをダウンロード
-echo -e "${YELLOW}GitHubからファイルをダウンロード中...${NC}"
+echo "ダウンロード中... (${#FILES[@]} files)"
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
 for file in "${FILES[@]}"; do
-    # ダウンロードURL
+    # 空のファイル名をスキップ
+    if [ -z "$file" ]; then
+        continue
+    fi
+
     url="${BASE_URL}/${file}"
-
-    # 保存先パス
     dest_file="${TEMP_DIR}/${file}"
-
-    # ディレクトリを作成
     mkdir -p "$(dirname "${dest_file}")"
 
-    # ファイルをダウンロード
-    echo "  ダウンロード中: ${file}"
     if [ -n "$GITHUB_TOKEN" ]; then
-        # トークン認証付きでダウンロード
         if curl -s -f -H "Authorization: token $GITHUB_TOKEN" -o "${dest_file}" "${url}"; then
-            echo -e "    ${GREEN}✓ 成功${NC}"
             ((SUCCESS_COUNT++))
         else
-            echo -e "    ${RED}✗ 失敗${NC}"
             ((FAIL_COUNT++))
         fi
     else
-        # 認証なしでダウンロード（公開リポジトリ）
         if curl -s -f -o "${dest_file}" "${url}"; then
-            echo -e "    ${GREEN}✓ 成功${NC}"
             ((SUCCESS_COUNT++))
         else
-            echo -e "    ${RED}✗ 失敗${NC}"
             ((FAIL_COUNT++))
         fi
     fi
 done
 
-echo ""
-echo "ダウンロード結果: 成功=${SUCCESS_COUNT}, 失敗=${FAIL_COUNT}"
-
-if [ $SUCCESS_COUNT -eq 0 ]; then
-    echo -e "${RED}エラー: ファイルのダウンロードに失敗しました${NC}"
-    echo "GitHubユーザー名、リポジトリ名、ブランチ名を確認してください"
+if [ $FAIL_COUNT -gt 0 ]; then
+    echo -e "${RED}エラー: ${FAIL_COUNT} ファイルのダウンロードに失敗${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓${NC} ${SUCCESS_COUNT} ファイルをダウンロード"
 
 # --- ファイル配置 ---
 
-# マッピング情報を連想配列に格納
-declare -A FOLDER_MAPPING
-while IFS=: read -r subfolder dest_dir; do
-    FOLDER_MAPPING["${subfolder}"]="${dest_dir}"
-done <<< "$MAPPING_LIST"
-
-# ファイルを配置
-echo -e "${YELLOW}ファイルを配置中...${NC}"
-
-# 配置先ディレクトリを保存（表示用）
+echo "配置中..."
 declare -A DEPLOYED_DIRS
 
 # JSONマージ関数
@@ -419,8 +448,15 @@ for i in "${!FILES[@]}"; do
         dest_base="$custom_dest"
         mapping_type="[個別設定]"
     else
-        # フォルダマッピングを使用
-        dest_base="${FOLDER_MAPPING[$subfolder]}"
+        # フォルダマッピングを使用（各ファイルのテンプレートから動的に取得）
+        dest_base=""
+        template_mapping=$(get_template_folder_mapping "${template_name}")
+        while IFS=: read -r map_subfolder map_dest; do
+            if [ "$map_subfolder" = "$subfolder" ]; then
+                dest_base="$map_dest"
+                break
+            fi
+        done <<< "$template_mapping"
         mapping_type=""
     fi
 
@@ -479,20 +515,4 @@ for i in "${!FILES[@]}"; do
     fi
 done
 
-echo ""
-echo -e "${GREEN}セットアップが完了しました！${NC}"
-echo "適用テンプレート: ${TEMPLATE_TYPES[*]}"
-echo ""
-echo "配置先:"
-for dest in "${!DEPLOYED_DIRS[@]}"; do
-    if [ "$dest" = "." ]; then
-        echo "  - プロジェクトルート"
-    else
-        echo "  - ${dest}/"
-    fi
-done
-echo ""
-echo "次のステップ:"
-echo "1. エディタ/IDEでプロジェクトを開く"
-echo "2. 必要な依存関係やツールをインストール"
-echo "3. 設定ファイルの内容を確認・カスタマイズ"
+echo -e "${GREEN}✓${NC} セットアップ完了 (${TEMPLATE_TYPES[*]})"

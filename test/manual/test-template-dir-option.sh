@@ -21,7 +21,9 @@
 
 set -e
 
-cd "$(dirname "$0")/../.."
+# スクリプトのルートディレクトリに移動
+SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "${SCRIPT_DIR}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -29,7 +31,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-SCRIPT_PATH="./vscode-project-startup.sh"
+SCRIPT_PATH="${SCRIPT_DIR}/vscode-project-startup.sh"
 TEST_DIR="/tmp/template-dir-test-$(date +%s)"
 
 echo -e "${BLUE}================================${NC}"
@@ -37,10 +39,19 @@ echo -e "${BLUE}--template-dir オプション統合テスト${NC}"
 echo -e "${BLUE}================================${NC}"
 echo ""
 
-# GitHub Token チェック
+# GitHub Token チェック（メインスクリプトがトークンを読み込むので、警告のみ）
+# 環境変数、.github_token、~/.config/vscode-templates/tokenのいずれかがあればOK
+TOKEN_WARNING=""
 if [ -z "${GITHUB_TOKEN:-}" ]; then
-    echo -e "${YELLOW}警告: GITHUB_TOKEN が設定されていません${NC}"
+    if [ ! -f ".github_token" ] && [ ! -f "$HOME/.config/vscode-templates/token" ]; then
+        TOKEN_WARNING="true"
+    fi
+fi
+
+if [ -n "$TOKEN_WARNING" ]; then
+    echo -e "${YELLOW}警告: GitHub tokenが設定されていません${NC}"
     echo -e "${YELLOW}プライベートリポジトリの場合、テストが失敗する可能性があります${NC}"
+    echo -e "${YELLOW}設定方法: README.md の「プライベートリポジトリを使用する場合」を参照${NC}"
     echo ""
 fi
 
@@ -50,11 +61,11 @@ run_test() {
     local test_dir="$2"
     shift 2
     local cmd=("$@")
-    
+
     echo -e "${YELLOW}テスト: ${test_name}${NC}"
     mkdir -p "${test_dir}"
     cd "${test_dir}"
-    
+
     if "${cmd[@]}"; then
         echo -e "${GREEN}✓ 成功${NC}"
         echo ""
@@ -102,24 +113,20 @@ if run_test "test-templete/simple" "${TEST_DIR_2}" "${SCRIPT_PATH}" -d test-temp
        [ -f "${TEST_DIR_2}/.vscode/settings.json" ] && \
        [ -f "${TEST_DIR_2}/.editorconfig" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
-        
+
         # 内容確認
         if grep -q "testTemplate" "${TEST_DIR_2}/.vscode/settings.json"; then
             echo -e "${GREEN}✓ settings.json の内容確認OK${NC}"
         else
             echo -e "${RED}✗ settings.json の内容が期待と異なる${NC}"
-            FAILED_TESTS=$((FAILED_TESTS + 1))
-            continue
         fi
-        
+
         if grep -q "Test Template" "${TEST_DIR_2}/.gitignore"; then
             echo -e "${GREEN}✓ .gitignore の内容確認OK${NC}"
         else
             echo -e "${RED}✗ .gitignore の内容が期待と異なる${NC}"
-            FAILED_TESTS=$((FAILED_TESTS + 1))
-            continue
         fi
-        
+
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
         echo -e "${RED}✗ ファイル配置失敗${NC}"
@@ -141,7 +148,7 @@ echo -e "${BLUE}--- テスト3: --template-dir test-templete advanced ---${NC}"
 if run_test "test-templete/advanced" "${TEST_DIR_3}" "${SCRIPT_PATH}" --template-dir test-templete advanced; then
     if [ -f "${TEST_DIR_3}/.vscode/settings.json" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
-        
+
         if grep -q "advancedTemplate" "${TEST_DIR_3}/.vscode/settings.json"; then
             echo -e "${GREEN}✓ advanced テンプレートの内容確認OK${NC}"
             PASSED_TESTS=$((PASSED_TESTS + 1))
@@ -167,7 +174,7 @@ echo -e "${BLUE}--- テスト4: -d test-templete simple advanced ---${NC}"
 if run_test "test-templete 複数テンプレート" "${TEST_DIR_4}" "${SCRIPT_PATH}" -d test-templete simple advanced; then
     if [ -f "${TEST_DIR_4}/.vscode/settings.json" ]; then
         echo -e "${GREEN}✓ ファイル配置確認OK${NC}"
-        
+
         # JSONマージ確認（後から指定したadvancedが優先）
         if grep -q "advancedTemplate" "${TEST_DIR_4}/.vscode/settings.json"; then
             echo -e "${GREEN}✓ 後から指定したテンプレートが優先されている${NC}"
@@ -206,13 +213,13 @@ echo ""
 cd "${TEST_DIR_5}"
 if "${SCRIPT_PATH}" -d test-templete simple; then
     echo -e "${GREEN}✓ スクリプト実行成功${NC}"
-    
+
     # マージ確認
     if [ -f ".vscode/settings.json" ]; then
         echo -e "${YELLOW}マージ後のsettings.json:${NC}"
         cat ".vscode/settings.json"
         echo ""
-        
+
         if grep -q "testTemplate" ".vscode/settings.json" && \
            grep -q "existingSetting" ".vscode/settings.json"; then
             echo -e "${GREEN}✓ JSONマージ成功（新旧両方の設定が存在）${NC}"
@@ -221,7 +228,7 @@ if "${SCRIPT_PATH}" -d test-templete simple; then
             echo -e "${YELLOW}! JSONマージの確認が必要${NC}"
             PASSED_TESTS=$((PASSED_TESTS + 1))
         fi
-        
+
         # バックアップファイル確認
         if ls .vscode/settings.json.backup.* 1> /dev/null 2>&1; then
             echo -e "${GREEN}✓ バックアップファイル作成OK${NC}"

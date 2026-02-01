@@ -1,177 +1,195 @@
 # テストディレクトリ
 
-このディレクトリには、`vscode-project-startup.sh` スクリプトのテストファイルが含まれています。
+このディレクトリには、`vscode-project-startup.sh` スクリプトの統合テストが含まれています。
 
 ## ディレクトリ構造
 
 ```
 test/
-├── README.md                      # このファイル
-├── vscode-project-startup.bats   # 自動ユニットテスト（推奨）
-└── manual/                        # 手動統合テスト
-    ├── test-local.sh             # ローカル環境でのE2Eテスト
-    └── test-merge.sh             # JSONマージ機能の検証
+├── README.md                                # このファイル
+└── manual/
+    └── test-template-dir-option.sh         # 統合テスト（5つのテストケース）
 ```
 
-## テストの種類
+## 統合テストの概要
 
-### 🤖 自動ユニットテスト（BATS）
+**ファイル**: `manual/test-template-dir-option.sh`
 
-**ファイル**: `vscode-project-startup.bats`
+**目的**: スクリプト全体の動作をエンドツーエンドで検証
 
-**目的**: 個別の関数やロジックを自動的にテスト
+**テストケース**:
+
+1. **デフォルト動作テスト**: デフォルトの`templete/`ディレクトリからbase templateを適用
+2. **カスタムディレクトリテスト（短縮形）**: `-d test-templete simple`オプションでsimple templateを適用
+3. **カスタムディレクトリテスト（完全形）**: `--template-dir test-templete advanced`オプションでadvanced templateを適用
+4. **複数テンプレートテスト**: `test-templete/simple`と`test-templete/advanced`を順番に適用
+5. **JSONマージ＆バックアップテスト**: 既存のJSONファイルとのマージ動作とバックアップファイル作成を確認
 
 **カバー範囲**:
-- ✅ マージ設定の取得
-- ✅ ファイルのマージ判定
-- ✅ テンプレートフォルダマッピング
-- ✅ ファイルの配置先決定
+- ✅ GitHubからのテンプレートダウンロード
+- ✅ ファイル配置（vscode/、git/、config/）
 - ✅ JSONマージ機能
-- ✅ 引数処理とエラーハンドリング
-- ✅ 使用方法の表示
+- ✅ バックアップファイル作成
+- ✅ カスタムテンプレートディレクトリ（--template-dir/-d オプション）
+- ✅ 複数テンプレートの適用順序
+- ✅ エラーハンドリング
 
-**実行方法**: [自動ユニットテストの実行](#batsテストの実行方法)を参照
+## 実行方法
 
-### 🔧 手動統合テスト（シェルスクリプト）
+### 前提条件
 
-**ディレクトリ**: `manual/`
+- **GITHUB_TOKEN**: プライベートリポジトリへのアクセスに必要（環境変数、`.github_token`ファイル、または`~/.config/vscode-templates/token`で設定）
+- **curl**: GitHubからのファイルダウンロードに使用
+- **jq**: JSONマージに使用（オプション、ないとマージが単純上書きになります）
+- **bash**: 4.0以上（連想配列を使用）
 
-**目的**: エンドツーエンド（E2E）での動作確認
+### トークンの設定
 
-**ファイル**:
-- **test-local.sh**: GitHub APIを使わずローカルのテンプレートを直接適用して動作確認
-- **test-merge.sh**: JSONマージ機能の実際の動作を視覚的に確認
-
-**使用シーン**:
-- スクリプト全体の動作確認
-- 実際のファイル配置を確認したい場合
-- マージ結果を目視で確認したい場合
-
-**実行方法**: [手動統合テストの実行](#手動統合テスト)を参照
-
-## BATSテストの実行方法
-
-### 1. BATSのインストール
-
-#### macOS (Homebrew)
+**方法1: 外部ファイル（推奨）**
 ```bash
-brew install bats-core
+# プロジェクトローカル
+echo 'github_pat_xxxxx' > .github_token
+chmod 600 .github_token
+
+# または、グローバル設定
+mkdir -p ~/.config/vscode-templates
+echo 'github_pat_xxxxx' > ~/.config/vscode-templates/token
+chmod 600 ~/.config/vscode-templates/token
 ```
 
-#### Ubuntu/Debian
+**方法2: 環境変数**
 ```bash
-sudo apt-get install bats
+export GITHUB_TOKEN="your_github_personal_access_token"
 ```
 
-#### 手動インストール
-```bash
-git clone https://github.com/bats-core/bats-core.git
-cd bats-core
-sudo ./install.sh /usr/local
-```
+### テストの実行
 
-### 2. テストの実行
-
-#### 全テストを実行
+#### 全テストを実行（推奨）
 ```bash
 cd /home/keita/Project/vs_code/VSCode-Templete
-bats test/vscode-project-startup.bats
+./test/manual/test-template-dir-option.sh
 ```
 
-#### 特定のテストのみ実行
-```bash
-# フィルタリング（説明にキーワードを含むテストのみ）
-bats test/vscode-project-startup.bats --filter "merge"
-bats test/vscode-project-startup.bats --filter "JSON"
-```
+#### VS Codeから実行
+1. Ctrl+Shift+P（Cmd+Shift+P on Mac）でコマンドパレットを開く
+2. "Tasks: Run Test Task"を選択
+3. "Run Integration Tests"を選択
 
-#### 詳細出力で実行
-```bash
-bats test/vscode-project-startup.bats --tap
-```
-
-### 3. 出力例
+### 出力例
 
 ```
-✓ get_merge_setting: デフォルトマージ設定を返す
-✓ should_merge_file: JSONファイルはマージ対象
-✓ should_merge_file: スニペットファイルはマージ対象
-✓ should_merge_file: 通常のテキストファイルはマージ対象外
-✓ get_template_folder_mapping: デフォルトマッピングを返す
-✓ merge_json_files: jqが利用可能な場合はマージ成功
+================================================================================
+テスト 1/5: デフォルト動作（templete/base）
+================================================================================
+✓ テスト環境作成...
+✓ スクリプト実行（デフォルト）...
+✓ ファイル配置確認...
+✓ ファイル内容確認...
+[SUCCESS] テスト 1 完了
+
+================================================================================
+テスト 2/5: -d test-templete simple
+================================================================================
+✓ テスト環境作成...
+✓ スクリプト実行（-d test-templete simple）...
+✓ ファイル配置確認...
+✓ ファイル内容確認...
+[SUCCESS] テスト 2 完了
+
 ...
 
-15 tests, 0 failures
+================================================================================
+テスト結果サマリー
+================================================================================
+総テスト数: 5
+成功: 5
+失敗: 0
 ```
 
-## テスト戦略
+## テストの詳細
 
-### 自動ユニットテスト（BATS）でカバー
+### テスト 1: デフォルト動作
 
-| 機能 | テスト内容 | ステータス |
-|------|-----------|----------|
-| `get_merge_setting` | マージ設定の取得 | ✅ |
-| `should_merge_file` | ファイルのマージ判定 | ✅ |
-| `get_template_folder_mapping` | テンプレートフォルダマッピング | ✅ |
-| `get_file_destination` | ファイルの配置先取得 | ✅ |
-| `merge_json_files` | JSONマージ機能 | ✅ |
-| 引数処理 | エラーハンドリング | ✅ |
-| `usage` | 使用方法の表示 | ✅ |
+デフォルトの`templete/base`からテンプレートをダウンロードし、適切なディレクトリに配置されることを確認します。
 
-### 手動統合テストでカバー
+**確認項目**:
+- `.vscode/settings.json`が配置される
+- 配置先が正しい（`templete/base/vscode/settings.json` → `.vscode/settings.json`）
 
-| テストシナリオ | 確認内容 |
-|-------------|---------|
-| ローカル環境テスト | テンプレートの実際の配置、マージ動作 |
-| JSONマージテスト | マージ結果の視覚的確認 |
+### テスト 2 & 3: カスタムテンプレートディレクトリ
 
-### 今後のテスト拡張候補
+`--template-dir`（`-d`）オプションで`test-templete/`ディレクトリからテンプレートを取得し、適切に配置されることを確認します。
 
-- [ ] GitHubからのファイルダウンロード（モック必要）
-- [ ] 複数テンプレートの適用順序
-- [ ] バックアップファイルの作成
-- [ ] より複雑なエラーケース
+**確認項目**:
+- `-d`（短縮形）と`--template-dir`（完全形）の両方が動作する
+- 指定したディレクトリからファイルが取得される
+- ファイル内容が正しい（simple/advancedの違いを検証）
 
-## 手動統合テスト
+### テスト 4: 複数テンプレートの適用
 
-これらのテストは、実際の環境でスクリプト全体の動作を確認するためのものです。
+simpleとadvancedを順番に適用し、後から適用したテンプレートが優先されることを確認します。
 
-### ローカル環境テスト
-```bash
-cd /home/keita/Project/vs_code/VSCode-Templete
-./test/manual/test-local.sh
+**確認項目**:
+- 両方のテンプレートが適用される
+- 後から適用したテンプレート（advanced）の値が優先される
+
+### テスト 5: JSONマージとバックアップ
+
+既存のJSONファイルがある状態で新しいテンプレートを適用し、マージとバックアップが正しく動作することを確認します。
+
+**確認項目**:
+- 既存のJSONファイルがバックアップされる（`settings.json.backup.YYYYMMDD_HHMMSS`）
+- JSONが深くマージされる（jqがある場合）
+- 既存の設定値が保持される
+- 新しい設定値が追加される
+- 上書き時は新しい値が優先される
+
+## test-templeteディレクトリについて
+
+`test-templete/`ディレクトリは、`--template-dir`オプションをテストするための専用ディレクトリです。
+
+**構造**:
+```
+test-templete/
+├── simple/
+│   ├── vscode/
+│   │   └── settings.json         # テスト用設定（editor.fontSize: 14）
+│   ├── git/
+│   │   └── .gitignore            # テスト用gitignore
+│   └── config/
+│       └── .editorconfig         # テスト用editorconfig
+└── advanced/
+    └── vscode/
+        └── settings.json         # テスト用設定（editor.fontSize: 16）
 ```
 
-このテストは：
-- テンプレートファイルを実際にコピー
-- 一時ディレクトリに配置
-- マージ結果を表示
-
-### JSONマージ詳細テスト
-```bash
-cd /home/keita/Project/vs_code/VSCode-Templete
-./test/manual/test-merge.sh
-```
-
-このテストは：
-- JSONマージ機能の詳細な動作確認
-- マージ前後のファイル内容を比較表示
-- jqの動作確認
+このディレクトリは本番の`templete/`とは独立しており、テストのためだけに使用されます。
 
 ## 依存関係
 
-- **bash**: 4.0以上
-- **bats-core**: 1.2.0以上（BATSテスト用）
-- **jq**: 1.5以上（JSONマージテスト用、オプション）
-- **curl**: GitHubからのダウンロード用
+- **bash**: 4.0以上（連想配列を使用）
+- **curl**: GitHubからのダウンロード用（必須）
+- **jq**: JSONマージ用（オプション、ないと単純上書きになります）
+- **GITHUB_TOKEN**: プライベートリポジトリアクセス用（環境変数）
 
 ## トラブルシューティング
 
-### jqがインストールされていない場合
+### GITHUB_TOKENが設定されていない
 
-jqが必要なテストはスキップされます：
 ```
-- merge_json_files: jqが利用可能な場合はマージ成功 (skipped: jqがインストールされていません)
+Error: GITHUB_TOKEN environment variable is not set
+```
+
+環境変数を設定してください：
+```bash
+export GITHUB_TOKEN="your_token_here"
+```
+
+### jqがインストールされていない
+
+jqがない場合、マージではなく単純上書きになります：
+```
+Warning: jq is not installed, falling back to overwrite mode
 ```
 
 jqをインストール：
@@ -183,20 +201,22 @@ brew install jq
 sudo apt-get install jq
 ```
 
-### BATSが見つからない場合
+### テンプレートが見つからない
 
-```bash
-command not found: bats
+```
+Error: Template 'xxx' not found in GitHub repository
 ```
 
-上記の「BATSのインストール」セクションを参照してください。
+- テンプレート名が正しいか確認
+- GitHubリポジトリに該当ディレクトリが存在するか確認
+- GITHUB_TOKENの権限が正しいか確認
 
 ## CI/CD 統合例
 
 ### GitHub Actions
 
 ```yaml
-name: Test
+name: Integration Tests
 
 on: [push, pull_request]
 
@@ -208,45 +228,36 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bats jq
-      - name: Run tests
-        run: bats test/vscode-project-startup.bats
+          sudo apt-get install -y jq curl
+      - name: Run integration tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./test/manual/test-template-dir-option.sh
 ```
 
 ## テストの追加方法
 
-### BATSテストの追加
+新しいテストケースを追加する場合：
 
-新しいユニットテストを追加する場合：
-
-1. `test/vscode-project-startup.bats` を編集
-2. 適切なセクションに `@test "テスト名" { ... }` ブロックを追加
-3. `run` コマンドでテスト対象の関数を実行
-4. アサーション（`[ "$status" -eq 0 ]` など）で検証
+1. `test/manual/test-template-dir-option.sh`を編集
+2. `run_test`関数を使ってテストケースを追加
+3. 検証項目を`verify_file_exists`、`verify_file_content`関数で確認
+4. 必要に応じて新しい`test-templete/`のテンプレートを作成
 
 例：
 ```bash
-@test "新機能: 正常動作する" {
-    run my_new_function "arg1" "arg2"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ "期待される文字列" ]]
-}
+# テスト 6: 新しいテストケース
+run_test 6 "新しい機能のテスト" "$TEST_DIR_6" "command" "args"
+verify_file_exists "$TEST_DIR_6/.vscode/settings.json"
+verify_file_content "$TEST_DIR_6/.vscode/settings.json" "expected_value"
 ```
 
-### 手動テストの追加
+## どのように使うか？
 
-新しい統合テストを追加する場合：
-
-1. `test/manual/` ディレクトリに新しいスクリプトを作成
-2. 実行権限を付与: `chmod +x test/manual/your-test.sh`
-3. このREADMEに説明を追加
-
-## どのテストを使うべきか？
-
-| 状況 | 推奨テスト |
-|------|----------|
-| 機能開発中 | BATSテスト（素早くフィードバック） |
-| CI/CD | BATSテスト（自動実行） |
-| リリース前 | 両方（完全な動作確認） |
-| バグ調査 | 手動テスト（詳細な挙動確認） |
-| 新機能の動作確認 | 手動テスト（実環境での確認） |
+| 状況 | 推奨アクション |
+|------|------------|
+| スクリプト変更後 | 統合テスト実行（全テストケース） |
+| 新機能追加後 | 新しいテストケースを追加して実行 |
+| バグ修正後 | 該当するテストケースが通ることを確認 |
+| リリース前 | 統合テスト実行（全テストケース） |
+| CI/CD | GitHub Actionsで自動実行 |

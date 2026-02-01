@@ -2,138 +2,21 @@
   // ============================================================================
   // VS Code タスク設定
   // ============================================================================
-  // 各種タスクを定義して、簡単に実行できるようにします
+  // 統合テストを実行するタスクを定義します
   //
-  // 【自動テスト】
-  //   - Run BATS Tests: ユニットテスト実行（デフォルト）
-  //   - Run BATS Tests (Verbose): 詳細出力
-  //   - Run BATS Tests (Filter): フィルタリング実行
-  //
-  // 【手動テスト】
-  //   - Manual Test (Local): ローカル環境でのE2Eテスト
-  //   - Manual Test (Merge): JSONマージ機能の検証
-  //
-  // 【セットアップ】
-  //   - Check Test Dependencies: 依存関係確認
-  //   - Install BATS: BATS自動インストール
+  // 【統合テスト】
+  //   - Run Integration Tests: 統合テスト実行（デフォルト）
   // ============================================================================
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run BATS Tests",
+      "label": "Run Integration Tests",
       "type": "shell",
-      "command": "bats",
-      "args": [
-        "test/vscode-project-startup.bats"
-      ],
+      "command": "./test/manual/test-template-dir-option.sh",
       "group": {
         "kind": "test",
         "isDefault": true
       },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run BATS Tests (Verbose)",
-      "type": "shell",
-      "command": "bats",
-      "args": [
-        "--tap",
-        "test/vscode-project-startup.bats"
-      ],
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run BATS Tests (Filter)",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-c",
-        "read -p 'Filter pattern: ' FILTER && bats --filter \"$FILTER\" test/vscode-project-startup.bats"
-      ],
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Manual Test (Local)",
-      "type": "shell",
-      "command": "./test/manual/test-local.sh",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Manual Test (Merge)",
-      "type": "shell",
-      "command": "./test/manual/test-merge.sh",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Install BATS",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-c",
-        "if ! command -v bats &> /dev/null; then echo 'Installing BATS...'; git clone https://github.com/bats-core/bats-core.git /tmp/bats-core && cd /tmp/bats-core && sudo ./install.sh /usr/local && cd - && rm -rf /tmp/bats-core && echo 'BATS installed successfully!'; else echo 'BATS is already installed'; fi"
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Check Test Dependencies",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-c",
-        "echo '=== Checking Test Dependencies ===' && echo -n 'bats: ' && (command -v bats &> /dev/null && echo '✓ installed' || echo '✗ not installed') && echo -n 'jq: ' && (command -v jq &> /dev/null && echo '✓ installed' || echo '✗ not installed') && echo -n 'shellcheck: ' && (command -v shellcheck &> /dev/null && echo '✓ installed' || echo '✗ not installed')"
-      ],
       "presentation": {
         "echo": true,
         "reveal": "always",

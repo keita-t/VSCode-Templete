@@ -19,15 +19,39 @@
 
 ```
 VSCode-Templete/
-├── vscode-project-startup.sh    # メインスクリプト
+├── .github/
+│   └── copilot-instructions.md  # AI コーディング支援用ドキュメント
+├── .vscode/                      # プロジェクト設定
+│   ├── extensions.json           # 推奨拡張機能
+│   ├── settings.json             # VSCode設定
+│   └── tasks.json                # タスク定義（テスト実行など）
 ├── templete/                     # テンプレートフォルダ
 │   ├── base/                     # 基本設定
-│   │   ├── git/.gitignore       # 汎用.gitignore
-│   │   └── vscode/settings.json # 汎用VSCode設定
-│   └── python/                   # Python環境
-│       ├── vscode/
-│       ├── docs/
-│       └── tests/
+│   │   ├── git/.gitignore        # 汎用.gitignore
+│   │   └── vscode/settings.json  # 汎用VSCode設定
+│   ├── python/                   # Python環境
+│   │   ├── git/.gitignore        # Python用.gitignore
+│   │   └── vscode/
+│   │       ├── settings.json     # Python用設定
+│   │       └── python.code-snippets  # Pythonスニペット
+│   └── docker/                   # Docker環境
+│       ├── config/
+│       │   ├── Dockerfile
+│       │   └── docker-compose.yml
+│       └── vscode/settings.json  # Docker用設定
+├── test-templete/                # テスト用テンプレート
+│   ├── simple/                   # シンプルなテストテンプレート
+│   │   ├── vscode/settings.json
+│   │   ├── git/.gitignore
+│   │   └── config/.editorconfig
+│   └── advanced/                 # 高度なテストテンプレート
+│       └── vscode/settings.json
+├── test/                         # テストスイート
+│   ├── manual/                   # 手動統合テスト
+│   │   └── test-template-dir-option.sh  # 統合テスト（5テストケース）
+│   └── README.md                 # テストドキュメント
+├── vscode-project-startup.sh     # メインスクリプト
+├── .gitignore
 └── README.md                     # このファイル
 ```
 
@@ -51,24 +75,86 @@ cd /path/to/your/project
 /path/to/vscode-project-startup.sh base python
 ```
 
+### 3. プライベートリポジトリを使用する場合
+
+プライベートリポジトリからテンプレートをダウンロードする場合は、GitHub Personal Access Tokenが必要です。
+
+**トークンの設定方法（3つの選択肢）:**
+
+#### 方法1: 外部ファイル（推奨）
+
+**プロジェクトローカル設定（プロジェクト固有のトークン）:**
+```bash
+# プロジェクトルートに.github_tokenファイルを作成
+echo 'github_pat_xxxxx' > .github_token
+chmod 600 .github_token  # セキュリティのため読み取り専用に
+
+# テンプレートを適用（自動的に.github_tokenが読み込まれます）
+./vscode-project-startup.sh base python
+```
+
+**グローバル設定（すべてのプロジェクトで共通のトークン）:**
+```bash
+# グローバル設定ディレクトリを作成
+mkdir -p ~/.config/vscode-templates
+
+# トークンファイルを作成
+echo 'github_pat_xxxxx' > ~/.config/vscode-templates/token
+chmod 600 ~/.config/vscode-templates/token
+
+# どのプロジェクトでも自動的に読み込まれます
+./vscode-project-startup.sh base python
+```
+
+#### 方法2: 環境変数
+
+```bash
+# トークンを環境変数に設定
+export GITHUB_TOKEN='github_pat_xxxxx'
+
+# テンプレートを適用
+./vscode-project-startup.sh base python
+
+# セキュリティのため、使用後はトークンを削除
+unset GITHUB_TOKEN
+```
+
+**トークンの優先順位:**
+1. 環境変数 `GITHUB_TOKEN`（最優先）
+2. プロジェクトローカル `.github_token`
+3. グローバル設定 `~/.config/vscode-templates/token`
+
+**トークンの作成:**
+GitHub Settings → Developer settings → Personal access tokens → Tokens (classic) から作成
+必要な権限: `repo` (Full control of private repositories)
+
+**⚠️ セキュリティ注意:**
+- `.github_token`ファイルは`.gitignore`に含まれています（コミットされません）
+- ファイルのパーミッションは必ず`600`または`400`に設定してください
+- 環境変数を使用する場合は、使用後に`unset GITHUB_TOKEN`でトークンを削除してください
+
 ## 💡 使用例
 
 ### 基本設定のみ
+
 ```bash
 ./vscode-project-startup.sh base
 ```
 
 ### Python開発環境
+
 ```bash
 ./vscode-project-startup.sh base python
 ```
 
 ### React Native + iOS
+
 ```bash
 ./vscode-project-startup.sh base react-native ios
 ```
 
 ### 階層的な設定
+
 ```bash
 # 基本 → チーム設定 → 個人設定の順で適用
 ./vscode-project-startup.sh base team-config my-preferences
@@ -124,16 +210,21 @@ declare -A MY-TEMPLATE_FILE_MAPPING=(
 ## 📚 テンプレート一覧
 
 ### base
+
 汎用的な基本設定
+
 - `.gitignore`: OS、エディタ、一般的な除外設定
 - `settings.json`: VSCodeの基本設定
 
 ### python
+
 Python開発環境の設定
+
 - VSCode設定（Python固有）
 - ドキュメント・テストフォルダ構造
 
 ### （追加可能）
+
 独自のテンプレートを `templete/` 配下に作成できます
 
 ## 🤝 貢献
@@ -144,32 +235,24 @@ Python開発環境の設定
 
 ## 🧪 テスト
 
-### 自動ユニットテスト（推奨）
-
-BATSを使用した自動テスト：
-
-```bash
-# BATSのインストール（初回のみ）
-sudo apt-get install bats  # Ubuntu/Debian
-brew install bats-core      # macOS
-
-# テスト実行
-bats test/vscode-project-startup.bats
-
-# VS Codeのテストエクスプローラからも実行可能
-```
-
-### 手動統合テスト
+### 統合テスト
 
 エンドツーエンドでの動作確認：
 
 ```bash
-# ローカル環境テスト
-./test/manual/test-local.sh
+# プライベートリポジトリの場合はトークン設定
+export GITHUB_TOKEN='your_token'
 
-# JSONマージ機能テスト
-./test/manual/test-merge.sh
+# 統合テスト実行（5つのテストケース）
+./test/manual/test-template-dir-option.sh
 ```
+
+**テスト内容：**
+1. デフォルト動作（templete/ から取得）
+2. test-templete/simple（--template-dir オプション）
+3. test-templete/advanced（別のテンプレート）
+4. 複数テンプレート組み合わせ
+5. 既存ファイルとのJSONマージ＆バックアップ
 
 詳細は [test/README.md](test/README.md) を参照してください。
 
