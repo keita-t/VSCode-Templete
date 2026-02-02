@@ -9,6 +9,7 @@ JSON/YAML/TOML/XMLファイルのマージをサポート。
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -287,14 +288,81 @@ def merge_json(existing_data: dict, new_data: dict) -> dict:
     return result
 
 
-def merge_json_files(existing_file: Path, new_file: Path, output_file: Path) -> bool:
-    """JSONファイルをマージ"""
-    try:
-        with existing_file.open('r', encoding='utf-8') as f:
-            existing_data = json.load(f)
+def strip_json_comments(content: str) -> str:
+    """
+    JSON文字列からコメントを除去する
+    - 単一行コメント (//) を除去
+    - 複数行コメント (/* */) を除去
 
+    Args:
+        content: JSONコンテンツ文字列
+
+    Returns:
+        コメントが除去されたJSON文字列
+    """
+    # 複数行コメント /* ... */ を除去
+    content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
+
+    # 単一行コメント // を除去（文字列内の//は除外）
+    lines = []
+    in_string = False
+    escape_next = False
+
+    for line in content.split('\n'):
+        cleaned_line = []
+        i = 0
+        while i < len(line):
+            char = line[i]
+
+            # エスケープ処理
+            if escape_next:
+                cleaned_line.append(char)
+                escape_next = False
+                i += 1
+                continue
+
+            # バックスラッシュ
+            if char == '\\':
+                cleaned_line.append(char)
+                escape_next = True
+                i += 1
+                continue
+
+            # ダブルクォート
+            if char == '"':
+                in_string = not in_string
+                cleaned_line.append(char)
+                i += 1
+                continue
+
+            # コメント開始（文字列外の場合のみ）
+            if not in_string and i + 1 < len(line) and line[i:i+2] == '//':
+                break  # 行の残りを無視
+
+            cleaned_line.append(char)
+            i += 1
+
+        line_str = ''.join(cleaned_line).rstrip()
+        if line_str:  # 空行でない場合のみ追加
+            lines.append(line_str)
+
+    return '\n'.join(lines)
+
+
+def merge_json_files(existing_file: Path, new_file: Path, output_file: Path) -> bool:
+    """JSONファイルをマージ（コメントを自動除去）"""
+    try:
+        # 既存ファイルを読み込み、コメントを除去
+        with existing_file.open('r', encoding='utf-8') as f:
+            existing_content = f.read()
+        existing_content = strip_json_comments(existing_content)
+        existing_data = json.loads(existing_content)
+
+        # 新規ファイルを読み込み、コメントを除去
         with new_file.open('r', encoding='utf-8') as f:
-            new_data = json.load(f)
+            new_content = f.read()
+        new_content = strip_json_comments(new_content)
+        new_data = json.loads(new_content)
 
         merged_data = merge_json(existing_data, new_data)
 
@@ -308,8 +376,136 @@ def merge_json_files(existing_file: Path, new_file: Path, output_file: Path) -> 
         return False
 
 
+def strip_yaml_comments(content: str) -> str:
+    """
+    YAML文字列からコメントを除去する
+    - # で始まるコメントを除去（文字列内の#は保持）
+
+    Args:
+        content: YAMLコンテンツ文字列
+
+    Returns:
+        コメントが除去されたYAML文字列
+    """
+    lines = []
+    for line in content.split('\n'):
+        # 簡易的な処理: 行頭から#までを探す（クォート内は考慮しない簡易版）
+        # YAMLパーサーは通常コメントを処理できるため、これは予備的な処理
+        # クォート外の # を見つける
+        in_single_quote = False
+        in_double_quote = False
+        escape_next = False
+        cleaned = []
+
+        for i, char in enumerate(line):
+            if escape_next:
+                cleaned.append(char)
+                escape_next = False
+                continue
+
+            if char == '\\' and (in_single_quote or in_double_quote):
+                cleaned.append(char)
+                escape_next = True
+                continue
+
+            if char == '"' and not in_single_quote:
+                in_double_quote = not in_double_quote
+                cleaned.append(char)
+                continue
+
+            if char == "'" and not in_double_quote:
+                in_single_quote = not in_single_quote
+                cleaned.append(char)
+                continue
+
+            if char == '#' and not in_single_quote and not in_double_quote:
+                break  # コメント開始
+
+            cleaned.append(char)
+
+        cleaned_line = ''.join(cleaned).rstrip()
+        lines.append(cleaned_line)
+
+    return '\n'.join(lines)
+
+
+def strip_toml_comments(content: str) -> str:
+    """
+    TOML文字列からコメントを除去する
+    - # で始まるコメントを除去（文字列内の#は保持）
+
+    Args:
+        content: TOMLコンテンツ文字列
+
+    Returns:
+        コメントが除去されたTOML文字列
+    """
+    lines = []
+    for line in content.split('\n'):
+        # TOMLのコメントは # から行末まで
+        in_single_quote = False
+        in_double_quote = False
+        in_triple_single = False
+        in_triple_double = False
+        escape_next = False
+        cleaned = []
+
+        i = 0
+        while i < len(line):
+            char = line[i]
+
+            if escape_next:
+                cleaned.append(char)
+                escape_next = False
+                i += 1
+                continue
+
+            # トリプルクォートのチェック
+            if i + 2 < len(line):
+                three_chars = line[i:i+3]
+                if three_chars == '"""' and not in_single_quote and not in_triple_single:
+                    in_triple_double = not in_triple_double
+                    cleaned.append(three_chars)
+                    i += 3
+                    continue
+                elif three_chars == "'''" and not in_double_quote and not in_triple_double:
+                    in_triple_single = not in_triple_single
+                    cleaned.append(three_chars)
+                    i += 3
+                    continue
+
+            if char == '\\' and (in_single_quote or in_double_quote or in_triple_single or in_triple_double):
+                cleaned.append(char)
+                escape_next = True
+                i += 1
+                continue
+
+            if char == '"' and not in_single_quote and not in_triple_single and not in_triple_double:
+                in_double_quote = not in_double_quote
+                cleaned.append(char)
+                i += 1
+                continue
+
+            if char == "'" and not in_double_quote and not in_triple_double and not in_triple_single:
+                in_single_quote = not in_single_quote
+                cleaned.append(char)
+                i += 1
+                continue
+
+            if char == '#' and not (in_single_quote or in_double_quote or in_triple_single or in_triple_double):
+                break  # コメント開始
+
+            cleaned.append(char)
+            i += 1
+
+        cleaned_line = ''.join(cleaned).rstrip()
+        lines.append(cleaned_line)
+
+    return '\n'.join(lines)
+
+
 def merge_yaml_files(existing_file: Path, new_file: Path, output_file: Path) -> bool:
-    """YAMLファイルをマージ"""
+    """YAMLファイルをマージ（コメントを自動除去）"""
     if not HAS_YAML:
         print_error("PyYAML がインストールされていません: pip install pyyaml")
         return False
@@ -318,11 +514,26 @@ def merge_yaml_files(existing_file: Path, new_file: Path, output_file: Path) -> 
         # インポートを遅延実行（.venvからのインポートを可能にするため）
         import yaml
 
+        # 既存ファイルを読み込み
         with existing_file.open('r', encoding='utf-8') as f:
-            existing_data = yaml.safe_load(f) or {}
+            existing_content = f.read()
+        # YAMLパーサーは通常コメントを扱えるが、念のため除去オプションを提供
+        try:
+            existing_data = yaml.safe_load(existing_content) or {}
+        except yaml.YAMLError:
+            # コメント除去を試みる
+            existing_content = strip_yaml_comments(existing_content)
+            existing_data = yaml.safe_load(existing_content) or {}
 
+        # 新規ファイルを読み込み
         with new_file.open('r', encoding='utf-8') as f:
-            new_data = yaml.safe_load(f) or {}
+            new_content = f.read()
+        try:
+            new_data = yaml.safe_load(new_content) or {}
+        except yaml.YAMLError:
+            # コメント除去を試みる
+            new_content = strip_yaml_comments(new_content)
+            new_data = yaml.safe_load(new_content) or {}
 
         merged_data = merge_json(existing_data, new_data)
 
@@ -336,7 +547,7 @@ def merge_yaml_files(existing_file: Path, new_file: Path, output_file: Path) -> 
 
 
 def merge_toml_files(existing_file: Path, new_file: Path, output_file: Path) -> bool:
-    """TOMLファイルをマージ"""
+    """TOMLファイルをマージ（コメントを自動除去）"""
     if not HAS_TOML:
         print_error("tomli/tomli_w がインストールされていません: pip install tomli tomli-w")
         return False
@@ -350,13 +561,35 @@ def merge_toml_files(existing_file: Path, new_file: Path, output_file: Path) -> 
 
         import tomli_w
 
-        with existing_file.open('rb') as f:
-            existing_data = tomli.load(f)
+        # 既存ファイルを読み込み
+        with existing_file.open('r', encoding='utf-8') as f:
+            existing_content = f.read()
+        try:
+            existing_data = tomli.loads(existing_content)
+        except Exception:
+            # コメント除去を試みる
+            existing_content = strip_toml_comments(existing_content)
+            existing_data = tomli.loads(existing_content)
 
-        with new_file.open('rb') as f:
-            new_data = tomli.load(f)
+        # 新規ファイルを読み込み
+        with new_file.open('r', encoding='utf-8') as f:
+            new_content = f.read()
+        try:
+            new_data = tomli.loads(new_content)
+        except Exception:
+            # コメント除去を試みる
+            new_content = strip_toml_comments(new_content)
+            new_data = tomli.loads(new_content)
 
         merged_data = merge_json(existing_data, new_data)
+
+        with output_file.open('wb') as f:
+            tomli_w.dump(merged_data, f)
+
+        return True
+    except Exception as e:
+        print_error(f"TOML マージエラー: {e}")
+        return False
 
         with output_file.open('wb') as f:
             tomli_w.dump(merged_data, f)

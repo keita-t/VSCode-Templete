@@ -453,3 +453,129 @@ class TestPrerequisites:
     def test_docker_templates_exist(self, template_dir: Path):
         """Dockerテンプレートが存在する"""
         assert (template_dir / "docker" / "base").exists()
+
+class TestCommentStripping:
+    """コメント除去機能のテスト"""
+
+    def test_json_with_single_line_comments(self, setup_script: Path, test_dir: Path, template_dir: Path):
+        """JSONファイルの単一行コメントを除去してマージ"""
+        # コメント付きJSONファイルを作成
+        vscode_dir = test_dir / ".vscode"
+        vscode_dir.mkdir(parents=True)
+        existing_settings = """{
+    // エディタ設定
+    "editor.tabSize": 2,
+    "editor.fontSize": 14,  // フォントサイズ
+    "files.autoSave": "afterDelay"  // 自動保存
+}"""
+        with open(vscode_dir / "settings.json", "w") as f:
+            f.write(existing_settings)
+
+        # マージテンプレートを適用
+        run_setup(setup_script, test_dir, template_dir.parent, ["test/merge-json"])
+
+        # マージ結果を確認
+        with open(vscode_dir / "settings.json") as f:
+            merged = json.load(f)
+
+        # 既存の設定が保持されている
+        assert merged["editor.fontSize"] == 14
+        assert merged["files.autoSave"] == "afterDelay"
+        # テンプレートからの新設定が追加される
+        assert merged["newSetting"] == "from-template"
+
+    def test_json_with_multi_line_comments(self, setup_script: Path, test_dir: Path, template_dir: Path):
+        """JSONファイルの複数行コメントを除去してマージ"""
+        # コメント付きJSONファイルを作成
+        vscode_dir = test_dir / ".vscode"
+        vscode_dir.mkdir(parents=True)
+        existing_settings = """{
+    /* これは複数行コメント
+       エディタ設定について
+       説明します */
+    "editor.tabSize": 2,
+    "editor.fontSize": 14,
+    /* このコメントも除去される */
+    "files.autoSave": "afterDelay"
+}"""
+        with open(vscode_dir / "settings.json", "w") as f:
+            f.write(existing_settings)
+
+        # マージテンプレートを適用
+        run_setup(setup_script, test_dir, template_dir.parent, ["test/merge-json"])
+
+        # マージ結果を確認
+        with open(vscode_dir / "settings.json") as f:
+            merged = json.load(f)
+
+        # 既存の設定が保持されている
+        assert merged["editor.fontSize"] == 14
+        assert merged["files.autoSave"] == "afterDelay"
+        # テンプレートからの新設定が追加される
+        assert merged["newSetting"] == "from-template"
+
+    def test_yaml_with_comments(self, setup_script: Path, test_dir: Path, template_dir: Path):
+        """YAMLファイルのコメントを適切に処理してマージ"""
+        # コメント付きYAMLファイルを作成
+        existing_compose = """# Docker Compose設定
+version: '3.8'
+
+services:
+  web:
+    image: nginx:latest  # Nginxイメージ
+    ports:
+      - "80:80"  # ポート設定
+  # データベース設定
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=mydb  # データベース名
+"""
+        with open(test_dir / "docker-compose.yml", "w") as f:
+            f.write(existing_compose)
+
+        # マージテンプレートを適用
+        run_setup(setup_script, test_dir, template_dir.parent, ["test/merge-yaml"])
+
+        # マージ結果を確認（エラーなく読み込めることを確認）
+        with open(test_dir / "docker-compose.yml") as f:
+            import yaml
+            merged = yaml.safe_load(f)
+
+        # 既存のdbサービスが保持される
+        assert "db" in merged["services"]
+        assert merged["services"]["db"]["image"] == "postgres:14"
+
+    def test_toml_with_comments(self, setup_script: Path, test_dir: Path, template_dir: Path):
+        """TOMLファイルのコメントを適切に処理してマージ"""
+        # コメント付きTOMLファイルを作成
+        existing_toml = """# プロジェクト設定
+[tool.poetry]
+name = "existing-project"  # プロジェクト名
+version = "1.0.0"
+description = "My existing project"
+
+# 依存関係
+[tool.poetry.dependencies]
+python = "^3.11"  # Python バージョン
+numpy = "^1.24.0"  # 数値計算ライブラリ
+
+# コードフォーマッター設定
+[tool.black]
+line-length = 100  # 行の長さ
+"""
+        with open(test_dir / "pyproject.toml", "w") as f:
+            f.write(existing_toml)
+
+        # マージテンプレートを適用
+        run_setup(setup_script, test_dir, template_dir.parent, ["test/merge-toml"])
+
+        # マージ結果を確認（エラーなく読み込めることを確認）
+        with open(test_dir / "pyproject.toml", "rb") as f:
+            import tomli
+            merged = tomli.load(f)
+
+        # 既存の設定が保持される
+        assert merged["tool"]["poetry"]["description"] == "My existing project"
+        assert merged["tool"]["poetry"]["dependencies"]["numpy"] == "^1.24.0"
+        assert merged["tool"]["black"]["line-length"] == 100

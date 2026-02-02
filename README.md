@@ -231,11 +231,26 @@ templates/
 
 以下の構造化ファイルは自動的にマージされます：
 
-- **JSON** (`.json`, `.code-snippets`) - Pythonネイティブ実装
-- **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用
-- **TOML** (`.toml`) - Python `tomli`/`tomli_w`を使用
+- **JSON** (`.json`, `.code-snippets`) - Pythonネイティブ実装（**コメント自動除去対応**）
+- **YAML** (`.yaml`, `.yml`) - Python `PyYAML`を使用（**コメント処理対応**）
+- **TOML** (`.toml`) - Python `tomli`/`tomli_w`を使用（**コメント処理対応**）
 - **XML** (`.xml`) - 基本的な実装
 - **行ベース** (`.gitignore`, `.dockerignore`, `.editorconfig`) - 重複排除でマージ
+
+**コメント処理について：**
+
+JSONファイル（標準ではコメント非対応）内の `//` および `/* */` 形式のコメントは、マージ前に自動的に除去されます。これにより、VSCodeの設定ファイル（`settings.json`など）に含まれるコメントが原因でエラーが発生することを防ぎます。YAML/TOMLファイルについても、パースエラーが発生した場合に自動的にコメント除去を試みます。
+
+```json
+// このようなコメント付きJSONでも
+{
+    "editor.tabSize": 4,  // 行末コメント
+    /* 複数行
+       コメント */
+    "files.autoSave": "afterDelay"
+}
+// ↑ マージ時に自動的にコメントが除去され、正常に処理されます
+```
 
 **必要なパッケージ：**
 
