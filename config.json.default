@@ -1,0 +1,61 @@
+{
+  "github": {
+    "user": "keita-t",
+    "repo": "VSCode-Templete",
+    "branch": "main"
+  },
+  "folder_mapping": {
+    "vscode": ".vscode",
+    "snippets": ".vscode",
+    "config": ".",
+    "docker": "."
+  },
+  "merge_patterns": {
+    "json": [
+      "*.json",
+      "*.code-snippets"
+    ],
+    "yaml": [
+      "*.yaml",
+      "*.yml"
+    ],
+    "toml": [
+      "*.toml"
+    ],
+    "xml": [
+      "*.xml"
+    ],
+    "line_based": [
+      ".gitignore",
+      ".dockerignore",
+      ".editorconfig"
+    ]
+  },
+  "file_match_patterns": [
+    "settings.json",
+    "extensions.json",
+    "launch.json",
+    "tasks.json",
+    ".gitignore",
+    ".editorconfig"
+  ],
+  "templates": {
+    "default/base": {},
+    "default/lightweight": {},
+    "docker/base": {
+      "file_match_patterns": [
+        "Dockerfile",
+        "docker-compose.yml",
+        ".dockerignore"
+      ]
+    },
+    "python/base": {
+      "file_match_patterns": [
+        "python.code-snippets",
+        "pyproject.toml",
+        "requirements.txt"
+      ]
+    },
+    "python/pylance-lw": {}
+  }
+}
